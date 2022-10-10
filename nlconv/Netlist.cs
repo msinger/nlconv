@@ -104,8 +104,8 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			var ports = ParsePortDefinitionList(ref n);
-
+			var ports   = ParsePortDefinitionList(ref n);
+			var coords  = ParseCoordList(ref n);
 			string desc = "";
 			string doc  = DefaultDocUrl;
 
@@ -134,6 +134,9 @@ namespace nlconv
 					throw new NetlistFormatException(p.Pos, p.Line, p.Col, "Port name already in use.");
 				t.Ports.Add(p.Name, p);
 			}
+
+			foreach (var kvp in coords)
+				t.AddCoords(kvp.Key, kvp.Value);
 
 			ParseEOT(n);
 			return t;

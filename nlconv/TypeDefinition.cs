@@ -11,7 +11,8 @@ namespace nlconv
 		public readonly string Color;
 		public readonly string Description;
 		public readonly string DocUrl;
-		public readonly Dictionary<string, PortDefinition> Ports;
+		public readonly Dictionary<string, PortDefinition>    Ports;
+		public readonly Dictionary<string, List<List<float>>> Coords;
 
 		public TypeDefinition(int pos, int line, int col,
 		                      string name,
@@ -24,7 +25,26 @@ namespace nlconv
 			Color       = color;
 			Description = desc;
 			DocUrl      = doc;
-			Ports = new Dictionary<string, PortDefinition>();
+			Ports       = new Dictionary<string, PortDefinition>();
+			Coords      = new Dictionary<string, List<List<float>>>();
+		}
+
+		public void AddCoords(string name, List<float> coords)
+		{
+			List<List<float>> l;
+			if (!Coords.TryGetValue(name, out l))
+			{
+				l = new List<List<float>>();
+				Coords.Add(name, l);
+			}
+			l.Add(coords);
+		}
+
+		public List<float> AddCoords(string name)
+		{
+			List<float> coords = new List<float>();
+			AddCoords(name, coords);
+			return coords;
 		}
 
 		public override string ToString()
@@ -41,6 +61,16 @@ namespace nlconv
 			{
 				sb.Append(" ");
 				sb.Append(port);
+			}
+			foreach (var kvp in Coords)
+			{
+				for (int i = 0; i < kvp.Value.Count; i++)
+				{
+					sb.Append(" ");
+					sb.Append(kvp.Key);
+					sb.Append("@");
+					sb.Append(CoordString(kvp.Value[i]));
+				}
 			}
 			if (!string.IsNullOrEmpty(Description))
 			{
