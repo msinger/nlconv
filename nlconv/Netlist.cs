@@ -13,6 +13,8 @@ namespace nlconv
 		public readonly SortedDictionary<string, WireDefinition>   Wires;
 		public readonly Dictionary<WireConnection, WireDefinition> Cons;
 
+		public string DefaultDocUrl = "";
+
 		public Netlist() : base()
 		{
 			Types = new SortedDictionary<string, TypeDefinition>();
@@ -81,7 +83,7 @@ namespace nlconv
 			return l;
 		}
 
-		protected static TypeDefinition ParseTypeDefinition(LinkedListNode<LexerToken> n)
+		protected TypeDefinition ParseTypeDefinition(LinkedListNode<LexerToken> n)
 		{
 			LinkedListNode<LexerToken> me = n;
 
@@ -102,9 +104,31 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			TypeDefinition t = new TypeDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color);
+			var ports = ParsePortDefinitionList(ref n);
 
-			foreach (var p in ParsePortDefinitionList(ref n))
+			string desc = "";
+			string doc  = DefaultDocUrl;
+
+			while (n.Value.Type == LexerTokenType.String)
+			{
+				desc += n.Value.String;
+				n = n.Next;
+			}
+
+			if (n.Value.Type == LexerTokenType.Name && n.Value.String.ToLowerInvariant() == "doc")
+			{
+				n = n.Next;
+				doc = "";
+				while (n.Value.Type == LexerTokenType.String)
+				{
+					doc += n.Value.String;
+					n = n.Next;
+				}
+			}
+
+			TypeDefinition t = new TypeDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color, desc, doc);
+
+			foreach (var p in ports)
 			{
 				if (t.Ports.ContainsKey(p.Name))
 					throw new NetlistFormatException(p.Pos, p.Line, p.Col, "Port name already in use.");
@@ -381,17 +405,31 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			WireDefinition w = new WireDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String, cls);
-
-			w.Sources.AddRange(ParseWireConnectionList(ref n));
-
+			var sources = ParseWireConnectionList(ref n);
+			var drains  = (IList<WireConnection>)null;
 			if (n.Value.Type == LexerTokenType.To)
 			{
 				n = n.Next;
-				w.Drains.AddRange(ParseWireConnectionList(ref n));
+				drains = ParseWireConnectionList(ref n);
 			}
 
-			foreach (var kvp in ParseCoordList(ref n))
+			var coords  = ParseCoordList(ref n);
+			string desc = "";
+
+			while (n.Value.Type == LexerTokenType.String)
+			{
+				desc += n.Value.String;
+				n = n.Next;
+			}
+
+			WireDefinition w = new WireDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String, cls, desc);
+
+			w.Sources.AddRange(sources);
+
+			if (drains != null)
+				w.Drains.AddRange(drains);
+
+			foreach (var kvp in coords)
 				w.Coords.Add(kvp.Value); // We just ignore the string before the @
 
 			ParseEOT(n);
@@ -438,7 +476,7 @@ namespace nlconv
 			return a;
 		}
 
-		protected static IList<ParserToken> Parse(LinkedListNode<LexerToken> n)
+		protected IList<ParserToken> Parse(LinkedListNode<LexerToken> n)
 		{
 			switch (n.Value.Type)
 			{
@@ -696,7 +734,7 @@ namespace nlconv
 			return sb.ToString();
 		}
 
-		public virtual void ToHtml(TextWriter s, string map, string doc, string cpuDoc)
+		public virtual void ToHtml(TextWriter s, string map)
 		{
 			List<string> types = new List<string>(Types.Keys);
 			List<string> cells = new List<string>(Cells.Keys);
@@ -707,9 +745,9 @@ namespace nlconv
 			wires.Sort(NetlistNameComparer.Default);
 
 			foreach (string x in types)
-				Types[x].ToHtml(s, Cells.Values, doc, cpuDoc);
+				Types[x].ToHtml(s, Cells.Values);
 			foreach (string x in cells)
-				Cells[x].ToHtml(s, Types, Cells, Cons, map, doc, cpuDoc);
+				Cells[x].ToHtml(s, Types, Cells, Cons, map);
 			foreach (string x in wires)
 				Wires[x].ToHtml(s, Cells, Types, map);
 		}

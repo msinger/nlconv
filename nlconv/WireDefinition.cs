@@ -10,16 +10,18 @@ namespace nlconv
 		public readonly WireClass            Class;
 		public readonly List<WireConnection> Sources;
 		public readonly List<WireConnection> Drains;
+		public readonly string               Description;
 		public readonly List<List<float>>    Coords;
 
-		public WireDefinition(int pos, int line, int col, string name, WireClass cls)
+		public WireDefinition(int pos, int line, int col, string name, WireClass cls, string desc)
 			: base(pos, line, col)
 		{
-			Name    = name;
-			Class   = cls;
-			Sources = new List<WireConnection>();
-			Drains  = new List<WireConnection>();
-			Coords  = new List<List<float>>();
+			Name        = name;
+			Class       = cls;
+			Description = desc;
+			Sources     = new List<WireConnection>();
+			Drains      = new List<WireConnection>();
+			Coords      = new List<List<float>>();
 		}
 
 		public override string ToString()
@@ -56,6 +58,12 @@ namespace nlconv
 			{
 				sb.Append(" @");
 				sb.Append(CoordString(Coords[i]));
+			}
+			if (!string.IsNullOrEmpty(Description))
+			{
+				sb.Append(" \"");
+				sb.Append(Description.Escape());
+				sb.Append("\"");
 			}
 			sb.Append(";");
 			return sb.ToString();
@@ -107,6 +115,8 @@ namespace nlconv
 			s.Write("</dd><dt>Drives</dt><dd>");
 			HtmlDrains(s, cells, types, map, null);
 			s.Write("</dd></dl>");
+			if (!string.IsNullOrEmpty(Description))
+				s.Write("<p>" + Description.ToHtml() + "</p>");
 		}
 
 		public string ClassString

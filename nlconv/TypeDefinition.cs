@@ -9,12 +9,21 @@ namespace nlconv
 	{
 		public readonly string Name;
 		public readonly string Color;
+		public readonly string Description;
+		public readonly string DocUrl;
 		public readonly Dictionary<string, PortDefinition> Ports;
 
-		public TypeDefinition(int pos, int line, int col, string name, string color) : base(pos, line, col)
+		public TypeDefinition(int pos, int line, int col,
+		                      string name,
+		                      string color,
+		                      string desc,
+		                      string doc)
+			: base(pos, line, col)
 		{
-			Name  = name;
-			Color = color;
+			Name        = name;
+			Color       = color;
+			Description = desc;
+			DocUrl      = doc;
 			Ports = new Dictionary<string, PortDefinition>();
 		}
 
@@ -32,6 +41,18 @@ namespace nlconv
 			{
 				sb.Append(" ");
 				sb.Append(port);
+			}
+			if (!string.IsNullOrEmpty(Description))
+			{
+				sb.Append(" \"");
+				sb.Append(Description.Escape());
+				sb.Append("\"");
+			}
+			if (!string.IsNullOrEmpty(DocUrl))
+			{
+				sb.Append(" doc \"");
+				sb.Append(DocUrl.Escape());
+				sb.Append("\"");
 			}
 			sb.Append(";");
 			return sb.ToString();
@@ -90,7 +111,7 @@ namespace nlconv
 			s.Write(" total)");
 		}
 
-		public virtual void ToHtml(TextWriter s, IEnumerable<CellDefinition> cells, string doc, string cpuDoc)
+		public virtual void ToHtml(TextWriter s, IEnumerable<CellDefinition> cells)
 		{
 			s.Write("<h2 id=\"t_" + Name.ToHtmlId() + "\">Type - <span class=\"" + CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span></h2>");
 			s.Write("<dl>");
@@ -101,10 +122,10 @@ namespace nlconv
 			HtmlCells(s, cells);
 			s.Write("</dd>");
 			s.Write("</dl>");
-			if (Name.ToLowerInvariant() == "cpu" || Name.ToLowerInvariant() == "sm83")
-				s.Write("<p><a href=\"" + cpuDoc + "\">View description of SM83 core connections</a></p>");
-			else
-				s.Write("<p><a href=\"" + doc + "#" + Name.ToHtmlId() + "\">View description in cell reference</a></p>");
+			if (!string.IsNullOrEmpty(Description))
+				s.Write("<p>" + Description.ToHtml() + "</p>");
+			if (!string.IsNullOrEmpty(DocUrl))
+				s.Write("<p><a href=\"" + DocUrl.Replace("%t", Name.ToHtmlId()).ToHtml() + "\">View documentation</a></p>");
 		}
 
 		public string CssClass

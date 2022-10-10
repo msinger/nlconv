@@ -174,7 +174,7 @@ namespace nlconv
 			HtmlPorts(s, ports, cells, types, cons, map, false);
 		}
 
-		public virtual void ToHtml(TextWriter s, IDictionary<string, TypeDefinition> types, IDictionary<string, CellDefinition> cells, IDictionary<WireConnection, WireDefinition> cons, string map, string doc, string cpuDoc)
+		public virtual void ToHtml(TextWriter s, IDictionary<string, TypeDefinition> types, IDictionary<string, CellDefinition> cells, IDictionary<WireConnection, WireDefinition> cons, string map)
 		{
 			s.Write("<h2 id=\"c_" + Name.ToHtmlId() + "\">Cell - <span class=\"" + types[Type].CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span>");
 			if (Alias.Count != 0)
