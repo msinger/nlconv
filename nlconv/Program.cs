@@ -9,9 +9,6 @@ namespace nlconv
 	{
 		public static int Main(string[] args)
 		{
-			const string home = "http://iceboy.a-singer.de/";
-			const string map  = "http://iceboy.a-singer.de/dmg_cpu_b_map/?wires=0";
-
 			const string style =
 				"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
 				"<style>" +
@@ -52,14 +49,15 @@ namespace nlconv
 				"<p><a rel=\"license\" " +
 				      "href=\"http://creativecommons.org/licenses/by-sa/4.0/\">" +
 				"<img alt=\"Creative Commons License\" style=\"border-width:0\" " +
-				     "src=\"https://i.creativecommons.org/l/by-sa/4.0/88x31.png\" />" +
-				"</a><br />This work is licensed under a " +
+				     "src=\"https://i.creativecommons.org/l/by-sa/4.0/88x31.png\">" +
+				"</a><br>This work is licensed under a " +
 				"<a rel=\"license\" " +
 				   "href=\"http://creativecommons.org/licenses/by-sa/4.0/\">" +
 				"Creative Commons Attribution-ShareAlike 4.0 International License</a>.</p>";
 
 			Netlist nl = new Netlist();
 			nl.DefaultDocUrl = "http://iceboy.a-singer.de/doc/dmg_cells.html#%t";
+			nl.MapUrl        = "http://iceboy.a-singer.de/dmg_cpu_b_map/?wires=0&cells=0";
 
 			string l;
 			while ((l = Console.ReadLine()) != null)
@@ -70,9 +68,9 @@ namespace nlconv
 			Console.Write("<html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Netlist</title>");
 			Console.Write(style);
 			Console.Write("</head><body><nav><p>");
-			Console.Write("<a href=\"" + home + "\">Home</a>");
+			Console.Write("<a href=\"http://iceboy.a-singer.de/\">Home</a>");
 			Console.Write("</p><hr></nav><main><h1>Netlist</h1>");
-			nl.ToHtml(Console.Out, map);
+			nl.ToHtml(Console.Out);
 			Console.Write("</main><footer><hr>" + footer);
 			Console.Write("</footer></body></html>");
 

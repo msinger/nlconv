@@ -118,10 +118,10 @@ namespace nlconv
 			}
 		}
 
-		public virtual void HtmlCells(TextWriter s, IEnumerable<CellDefinition> cells)
+		public virtual void HtmlCells(TextWriter s, Netlist netlist)
 		{
 			int count = 0;
-			foreach (var c in cells)
+			foreach (var c in netlist.Cells.Values)
 			{
 				if (c.IsVirtual)
 					continue;
@@ -141,7 +141,7 @@ namespace nlconv
 			s.Write(" total)");
 		}
 
-		public virtual void ToHtml(TextWriter s, IEnumerable<CellDefinition> cells)
+		public virtual void ToHtml(TextWriter s, Netlist netlist)
 		{
 			s.Write("<h2 id=\"t_" + Name.ToHtmlId() + "\">Type - <span class=\"" + CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span></h2>");
 			s.Write("<dl>");
@@ -149,7 +149,7 @@ namespace nlconv
 			s.Write("<dt>Ports</dt><dd>");
 			HtmlPorts(s);
 			s.Write("</dd><dt>Cells</dt><dd>");
-			HtmlCells(s, cells);
+			HtmlCells(s, netlist);
 			s.Write("</dd>");
 			s.Write("</dl>");
 			if (!string.IsNullOrEmpty(Description))

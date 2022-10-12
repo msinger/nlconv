@@ -69,7 +69,7 @@ namespace nlconv
 			return sb.ToString();
 		}
 
-		public virtual void HtmlConnections(TextWriter s, IList<WireConnection> l, IDictionary<string, CellDefinition> cells, IDictionary<string, TypeDefinition> types, string map, WireConnection skip)
+		public virtual void HtmlConnections(TextWriter s, IList<WireConnection> l, Netlist netlist, WireConnection skip)
 		{
 			if (l.Count == 0 || (l.Count == 1 && l[0] == skip))
 			{
@@ -84,36 +84,36 @@ namespace nlconv
 				if (count != 0)
 					s.Write(", ");
 				count++;
-				s.Write(x.ToHtml(cells, types, map));
+				s.Write(x.ToHtml(netlist));
 			}
 			if (count > 1)
 				s.Write(" (" + count + " total)");
 		}
 
-		public void HtmlSources(TextWriter s, IDictionary<string, CellDefinition> cells, IDictionary<string, TypeDefinition> types, string map, WireConnection skip)
+		public void HtmlSources(TextWriter s, Netlist netlist, WireConnection skip)
 		{
-			HtmlConnections(s, Sources, cells, types, map, skip);
+			HtmlConnections(s, Sources, netlist, skip);
 		}
 
-		public void HtmlDrains(TextWriter s, IDictionary<string, CellDefinition> cells, IDictionary<string, TypeDefinition> types, string map, WireConnection skip)
+		public void HtmlDrains(TextWriter s, Netlist netlist, WireConnection skip)
 		{
-			HtmlConnections(s, Drains, cells, types, map, skip);
+			HtmlConnections(s, Drains, netlist, skip);
 		}
 
-		public virtual void ToHtml(TextWriter s, IDictionary<string, CellDefinition> cells, IDictionary<string, TypeDefinition> types, string map)
+		public virtual void ToHtml(TextWriter s, Netlist netlist)
 		{
 			s.Write("<h2 id=\"w_" + Name.ToHtmlId() + "\">Wire - <span class=\"" + CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span></h2>");
 			s.Write("<dl>");
 			s.Write("<dt>Name</dt><dd>" + Name.ToHtmlName() + "</dd>");
 			s.Write("<dt>Class</dt><dd>" + ClassString + "</dd>");
-			if (Coords.Count != 0)
-				s.Write("<dt>Location</dt><dd><a href=\"" + map + "&view=line[]&" + LineCoordString(Coords) + "\">Highlight on map</a></dd>");
+			if (Coords.Count != 0 && !string.IsNullOrEmpty(netlist.MapUrl))
+				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=line[]&" + LineCoordString(Coords) + "\">Highlight on map</a></dd>");
 			else
 				s.Write("<dt>Location</dt><dd>-</dd>");
 			s.Write("<dt>Driven by</dt><dd>");
-			HtmlSources(s, cells, types, map, null);
+			HtmlSources(s, netlist, null);
 			s.Write("</dd><dt>Drives</dt><dd>");
-			HtmlDrains(s, cells, types, map, null);
+			HtmlDrains(s, netlist, null);
 			s.Write("</dd></dl>");
 			if (!string.IsNullOrEmpty(Description))
 				s.Write("<p>" + Description.ToHtml() + "</p>");

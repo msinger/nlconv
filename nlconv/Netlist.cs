@@ -14,6 +14,7 @@ namespace nlconv
 		public readonly Dictionary<WireConnection, WireDefinition> Cons;
 
 		public string DefaultDocUrl = "";
+		public string MapUrl        = "";
 
 		public Netlist() : base()
 		{
@@ -737,7 +738,7 @@ namespace nlconv
 			return sb.ToString();
 		}
 
-		public virtual void ToHtml(TextWriter s, string map)
+		public virtual void ToHtml(TextWriter s)
 		{
 			List<string> types = new List<string>(Types.Keys);
 			List<string> cells = new List<string>(Cells.Keys);
@@ -748,11 +749,11 @@ namespace nlconv
 			wires.Sort(NetlistNameComparer.Default);
 
 			foreach (string x in types)
-				Types[x].ToHtml(s, Cells.Values);
+				Types[x].ToHtml(s, this);
 			foreach (string x in cells)
-				Cells[x].ToHtml(s, Types, Cells, Cons, map);
+				Cells[x].ToHtml(s, this);
 			foreach (string x in wires)
-				Wires[x].ToHtml(s, Cells, Types, map);
+				Wires[x].ToHtml(s, this);
 		}
 	}
 }

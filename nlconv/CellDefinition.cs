@@ -111,10 +111,10 @@ namespace nlconv
 			return sb.ToString();
 		}
 
-		public virtual void HtmlPorts(TextWriter s, IEnumerable<PortDefinition> ports, IDictionary<string, CellDefinition> cells, IDictionary<string, TypeDefinition> types, IDictionary<WireConnection, WireDefinition> cons, string map, bool output)
+		public virtual void HtmlPorts(TextWriter s, Netlist netlist, bool output)
 		{
 			bool first = true;
-			foreach (var p in ports)
+			foreach (var p in netlist.Types[Type].Ports.Values)
 			{
 				if (output && p.Direction != PortDirection.Output && p.Direction != PortDirection.Tristate && p.Direction != PortDirection.Bidir && p.Direction != PortDirection.OutputLow && p.Direction != PortDirection.OutputHigh)
 					continue;
@@ -128,7 +128,7 @@ namespace nlconv
 				bool portLink = Coords.ContainsKey("") && Coords.ContainsKey(p.Name);
 				s.Write("<span class=\"" + p.CssClass + "\">");
 				if (portLink)
-					s.Write("<a href=\"" + map + "&view=" + CoordString(Coords[""][0]) + "&" + PortCoordString(Coords[p.Name]) + "\">");
+					s.Write("<a href=\"" + netlist.MapUrl + "&view=" + CoordString(Coords[""][0]) + "&" + PortCoordString(Coords[p.Name]) + "\">");
 				s.Write(p.Name.ToHtmlName());
 				if (portLink)
 					s.Write("</a>");
@@ -140,43 +140,43 @@ namespace nlconv
 					s.Write(" &larr; ");
 
 				WireConnection wc = new WireConnection(Name, p.Name);
-				if (!cons.ContainsKey(wc))
+				if (!netlist.Cons.ContainsKey(wc))
 				{
 					s.Write("-");
 					continue;
 				}
 
-				WireDefinition w = cons[wc];
+				WireDefinition w = netlist.Cons[wc];
 				s.Write("<span class=\"" + w.CssClass + "\"><a href=\"#w_" + w.Name.ToHtmlId() + "\">" + w.Name.ToHtmlName() + "</a></span>");
 
 				if (output)
 				{
 					s.Write(" &rarr; ");
-					w.HtmlDrains(s, cells, types, map, wc);
+					w.HtmlDrains(s, netlist, wc);
 				}
 				else
 				{
 					s.Write(" &larr; ");
-					w.HtmlSources(s, cells, types, map, wc);
+					w.HtmlSources(s, netlist, wc);
 				}
 			}
 			if (first)
 				s.Write("-");
 		}
 
-		public virtual void HtmlOutputs(TextWriter s, IEnumerable<PortDefinition> ports, IDictionary<string, CellDefinition> cells, IDictionary<string, TypeDefinition> types, IDictionary<WireConnection, WireDefinition> cons, string map)
+		public virtual void HtmlOutputs(TextWriter s, Netlist netlist)
 		{
-			HtmlPorts(s, ports, cells, types, cons, map, true);
+			HtmlPorts(s, netlist, true);
 		}
 
-		public virtual void HtmlInputs(TextWriter s, IEnumerable<PortDefinition> ports, IDictionary<string, CellDefinition> cells, IDictionary<string, TypeDefinition> types, IDictionary<WireConnection, WireDefinition> cons, string map)
+		public virtual void HtmlInputs(TextWriter s, Netlist netlist)
 		{
-			HtmlPorts(s, ports, cells, types, cons, map, false);
+			HtmlPorts(s, netlist, false);
 		}
 
-		public virtual void ToHtml(TextWriter s, IDictionary<string, TypeDefinition> types, IDictionary<string, CellDefinition> cells, IDictionary<WireConnection, WireDefinition> cons, string map)
+		public virtual void ToHtml(TextWriter s, Netlist netlist)
 		{
-			s.Write("<h2 id=\"c_" + Name.ToHtmlId() + "\">Cell - <span class=\"" + types[Type].CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span>");
+			s.Write("<h2 id=\"c_" + Name.ToHtmlId() + "\">Cell - <span class=\"" + netlist.Types[Type].CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span>");
 			if (Alias.Count != 0)
 			{
 				s.Write(" (alias:");
@@ -189,14 +189,14 @@ namespace nlconv
 			s.Write("<dt>Name</dt><dd>" + Name.ToHtmlName() + "</dd>");
 			s.Write("<dt>Type</dt><dd><a href=\"#t_" + Type.ToHtmlId() + "\">" + Type.ToHtmlName() + "</a></dd>");
 			s.Write("<dt>Orientation</dt><dd>" + OrientationString + "</dd>");
-			if (Coords.ContainsKey(""))
-				s.Write("<dt>Location</dt><dd><a href=\"" + map + "&view=" + CoordString(Coords[""][0]) + "&" + BoxCoordString(Coords[""][0]) + "\">Highlight on map</a></dd>");
+			if (Coords.ContainsKey("") && !string.IsNullOrEmpty(netlist.MapUrl))
+				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=" + CoordString(Coords[""][0]) + "&" + BoxCoordString(Coords[""][0]) + "\">Highlight on map</a></dd>");
 			else
 				s.Write("<dt>Location</dt><dd>-</dd>");
 			s.Write("<dt>Driven by</dt><dd>");
-			HtmlInputs(s, types[Type].Ports.Values, cells, types, cons, map);
+			HtmlInputs(s, netlist);
 			s.Write("</dd><dt>Drives</dt><dd>");
-			HtmlOutputs(s, types[Type].Ports.Values, cells, types, cons, map);
+			HtmlOutputs(s, netlist);
 			s.Write("</dd></dl>");
 			if (IsSpare)
 				s.Write("<p>[SPARE] - This is a spare cell that has no relevant function.</p>");

@@ -72,15 +72,15 @@ namespace nlconv
 			return !EqualityComparer<WireConnection>.Default.Equals(x, y);
 		}
 
-		public virtual string ToHtml(IDictionary<string, CellDefinition> cells, IDictionary<string, TypeDefinition> types, string map)
+		public virtual string ToHtml(Netlist netlist)
 		{
-			bool portLink = cells[Cell].Coords.ContainsKey("") && cells[Cell].Coords.ContainsKey(Port);
+			bool portLink = netlist.Cells[Cell].Coords.ContainsKey("") && netlist.Cells[Cell].Coords.ContainsKey(Port);
 			StringBuilder sb = new StringBuilder();
 			sb.Append("<a href=\"#c_" + Cell.ToHtmlId() + "\">");
 			sb.Append(Cell.ToHtmlName());
-			sb.Append("</a>.<span class=\"" + types[cells[Cell].Type].Ports[Port].CssClass + "\">");
+			sb.Append("</a>.<span class=\"" + netlist.Types[netlist.Cells[Cell].Type].Ports[Port].CssClass + "\">");
 			if (portLink)
-				sb.Append("<a href=\"" + map + "?view=" + CoordString(cells[Cell].Coords[""][0]) + "&" + PortCoordString(cells[Cell].Coords[Port]) + "\">");
+				sb.Append("<a href=\"" + netlist.MapUrl + "?view=" + CoordString(netlist.Cells[Cell].Coords[""][0]) + "&" + PortCoordString(netlist.Cells[Cell].Coords[Port]) + "\">");
 			sb.Append(Port.ToHtmlName());
 			if (portLink)
 				sb.Append("</a>");
