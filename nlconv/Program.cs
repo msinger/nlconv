@@ -9,6 +9,44 @@ namespace nlconv
 	{
 		public static int Main(string[] args)
 		{
+			string option = args.Length == 1 ? args[0] : null;
+			switch (option)
+			{
+			case null:
+			case "--html":
+				break;
+			default:
+				Console.Error.WriteLine("Usage: nlconv.exe [<OPTIONS>]");
+				Console.Error.WriteLine();
+				Console.Error.WriteLine("OPTIONS:");
+				Console.Error.WriteLine("  --html        Convert netlist from STDIN to HTML on STDOUT.");
+				Console.Error.WriteLine();
+				Console.Error.WriteLine("Without option, nlconv.exe just reads netlist from STDIN");
+				Console.Error.WriteLine("and checks if there are no errors.");
+				return option == "--help" ? 0 : 1;
+			}
+
+			Netlist nl = new Netlist();
+			nl.DefaultDocUrl = "http://iceboy.a-singer.de/doc/dmg_cells.html#%t";
+			nl.MapUrl        = "http://iceboy.a-singer.de/dmg_cpu_b_map/?wires=0&cells=0";
+
+			string l;
+			while ((l = Console.ReadLine()) != null)
+				nl.WriteLine(l);
+			nl.Flush();
+
+			switch (option)
+			{
+			default:
+				Console.Error.WriteLine("Netlist parsed successfully.");
+				return 0;
+			case "--html":
+				return GenHtml(nl);
+			}
+		}
+
+		private static int GenHtml(Netlist nl)
+		{
 			const string style =
 				"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
 				"<style>" +
@@ -54,15 +92,6 @@ namespace nlconv
 				"<a rel=\"license\" " +
 				   "href=\"http://creativecommons.org/licenses/by-sa/4.0/\">" +
 				"Creative Commons Attribution-ShareAlike 4.0 International License</a>.</p>";
-
-			Netlist nl = new Netlist();
-			nl.DefaultDocUrl = "http://iceboy.a-singer.de/doc/dmg_cells.html#%t";
-			nl.MapUrl        = "http://iceboy.a-singer.de/dmg_cpu_b_map/?wires=0&cells=0";
-
-			string l;
-			while ((l = Console.ReadLine()) != null)
-				nl.WriteLine(l);
-			nl.Flush();
 
 			Console.WriteLine("<!DOCTYPE html>");
 			Console.Write("<html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Netlist</title>");
