@@ -1,6 +1,7 @@
 using System.Text;
 using System.IO;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace nlconv
 {
@@ -153,9 +154,41 @@ namespace nlconv
 					case WireClass.Data:    return "bg_blue";
 					case WireClass.Address: return "bg_yellow";
 					case WireClass.Reset:   return "bg_turquoise";
-					case WireClass.Analog:  return "bg_green";
+					case WireClass.Analog:  return "bg_lime";
 				}
 				return "bg_blue";
+			}
+		}
+
+		public Color Color
+		{
+			get
+			{
+				switch (Class)
+				{
+					case WireClass.Ground:  return Color.Black;
+					case WireClass.Power:   return Color.Red;
+					case WireClass.Decoded: return Color.Orange;
+					case WireClass.Control: return Color.Purple;
+					case WireClass.Clock:   return Color.Magenta;
+					case WireClass.Data:    return Color.Blue;
+					case WireClass.Address: return Color.Yellow;
+					case WireClass.Reset:   return Color.Turquoise;
+					case WireClass.Analog:  return Color.Lime;
+				}
+				return Color.Blue;
+			}
+		}
+
+		public virtual void Draw(Graphics g, float sx, float sy)
+		{
+			Pen pen = new Pen(Color, 4.0f);
+			foreach (var c in Coords)
+			{
+				PointF[] pts = new PointF[c.Count / 2];
+				for (int i = 0; i < c.Count / 2; i++)
+					pts[i] = new PointF(c[i * 2] * sx, c[i * 2 + 1] * sy);
+				g.DrawLines(pen, pts);
 			}
 		}
 	}

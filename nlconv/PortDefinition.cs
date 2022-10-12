@@ -33,7 +33,7 @@ namespace nlconv
 			{
 				switch (Direction)
 				{
-					case PortDirection.Input:        return "bg_green";
+					case PortDirection.Input:        return "bg_lime";
 					case PortDirection.Output:       return "bg_red";
 					case PortDirection.Tristate:     return "bg_orange";
 					case PortDirection.Bidir:        return "bg_yellow";

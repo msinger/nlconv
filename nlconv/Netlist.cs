@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
+using System.Drawing;
 
 namespace nlconv
 {
@@ -151,7 +152,7 @@ namespace nlconv
 			switch (color)
 			{
 			case "red":
-			case "green":
+			case "lime":
 			case "blue":
 			case "yellow":
 			case "cyan":
@@ -159,7 +160,7 @@ namespace nlconv
 			case "orange":
 			case "purple":
 			case "turquoise":
-			case "darkgreen":
+			case "green":
 			case "black":
 				return color;
 			default:
@@ -754,6 +755,12 @@ namespace nlconv
 				Cells[x].ToHtml(s, this);
 			foreach (string x in wires)
 				Wires[x].ToHtml(s, this);
+		}
+
+		public virtual void DrawWires(Graphics g, float sx, float sy)
+		{
+			foreach (var x in Wires)
+				x.Value.Draw(g, sx, sy);
 		}
 	}
 }

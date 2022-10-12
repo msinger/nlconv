@@ -34,7 +34,9 @@ RESOURCES =
 
 EXTRAS =
 
-REFERENCES = System
+REFERENCES = \
+	System \
+	System.Drawing
 
 PROJECT_REFERENCES =
 
