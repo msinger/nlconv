@@ -757,6 +757,12 @@ namespace nlconv
 				Wires[x].ToHtml(s, this);
 		}
 
+		public virtual void DrawCells(Graphics g, float sx, float sy)
+		{
+			foreach (var x in Cells)
+				x.Value.Draw(this, g, sx, sy);
+		}
+
 		public virtual void DrawWires(Graphics g, float sx, float sy)
 		{
 			foreach (var x in Wires)

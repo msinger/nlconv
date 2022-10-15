@@ -15,9 +15,19 @@ Generate HTML file containing all types, cells and wires:
 nlconv --html <input.nl >output.html
 ```
 
+Generate PNG image containing all cells:
+```
+nlconv --png-wires <input.nl >output.png
+```
+
 Generate PNG image containing all wires:
 ```
 nlconv --png-wires <input.nl >output.png
+```
+
+Generate PNG image containing everything:
+```
+nlconv --png <input.nl >output.png
 ```
 
 
@@ -25,9 +35,7 @@ TODO
 ----
 
 Not yet implemented, but planned:
-* Generate PNG image containing all cells.
 * Generate PNG image containing all labels.
-* Generate PNG image containing all cells, wires and labels.
 * Generate Java Script code containing the coordinates for cells and wires to be used by the
   [map](https://github.com/msinger/dmg_cpu_b_map).
 * Generate Verilog code containing all cells and wires.

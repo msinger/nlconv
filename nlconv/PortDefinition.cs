@@ -1,3 +1,5 @@
+using System.Drawing;
+
 namespace nlconv
 {
 	public class PortDefinition : ParserToken
@@ -42,6 +44,24 @@ namespace nlconv
 					case PortDirection.NotConnected: return "bg_blue";
 				}
 				return "bg_white";
+			}
+		}
+
+		public Color Color
+		{
+			get
+			{
+				switch (Direction)
+				{
+					case PortDirection.Input:        return Color.Lime;
+					case PortDirection.Output:       return Color.Red;
+					case PortDirection.Tristate:     return Color.Orange;
+					case PortDirection.Bidir:        return Color.Yellow;
+					case PortDirection.OutputLow:    return Color.Purple;
+					case PortDirection.OutputHigh:   return Color.Magenta;
+					case PortDirection.NotConnected: return Color.Blue;
+				}
+				return Color.White;
 			}
 		}
 	}

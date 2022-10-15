@@ -182,7 +182,7 @@ namespace nlconv
 
 		public virtual void Draw(Graphics g, float sx, float sy)
 		{
-			Pen pen = new Pen(Color, 4.0f);
+			Pen pen = new Pen(Color, 5.0f);
 			foreach (var c in Coords)
 			{
 				PointF[] pts = new PointF[c.Count / 2];

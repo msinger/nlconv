@@ -16,14 +16,18 @@ namespace nlconv
 			{
 			case null:
 			case "--html":
+			case "--png-cells":
 			case "--png-wires":
+			case "--png":
 				break;
 			default:
 				Console.Error.WriteLine("Usage: nlconv.exe [<OPTIONS>]");
 				Console.Error.WriteLine();
 				Console.Error.WriteLine("OPTIONS:");
 				Console.Error.WriteLine("  --html        Convert netlist from STDIN to HTML on STDOUT.");
+				Console.Error.WriteLine("  --png-cells   Convert netlist from STDIN to PNG containing all cells on STDOUT.");
 				Console.Error.WriteLine("  --png-wires   Convert netlist from STDIN to PNG containing all wires on STDOUT.");
+				Console.Error.WriteLine("  --png         Convert netlist from STDIN to PNG containing everything on STDOUT.");
 				Console.Error.WriteLine();
 				Console.Error.WriteLine("Without option, nlconv.exe just reads netlist from STDIN");
 				Console.Error.WriteLine("and checks if there are no errors.");
@@ -46,8 +50,12 @@ namespace nlconv
 				return 0;
 			case "--html":
 				return GenHtml(nl);
+			case "--png-cells":
+				return GenCellsPng(nl);
 			case "--png-wires":
 				return GenWiresPng(nl);
+			case "--png":
+				return GenAllPng(nl);
 			}
 		}
 
@@ -112,14 +120,14 @@ namespace nlconv
 			return 0;
 		}
 
-		private static int GenWiresPng(Netlist nl)
+		private static int GenPng(Netlist nl, Action<Graphics, float, float> draw)
 		{
 			const int width  = 16384;
 			const int height = 16384;
 
 			// Scaling needed from Leaflet 256x256 coordinates to image size
-			const float sx = (float)width / 256.0f;
-			const float sy = (float)height / 256.0f;
+			const float sx = (float)height / 256.0f;
+			const float sy = (float)width / 256.0f;
 
 			Bitmap bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
 			using (Graphics g = Graphics.FromImage(bmp))
@@ -129,10 +137,28 @@ namespace nlconv
 				// Rotate to Leaflet map coordinate system
 				g.RotateTransform(-90.0f);
 
-				nl.DrawWires(g, sx, sy);
+				draw(g, sx, sy);
 			}
 			bmp.Save(Console.OpenStandardOutput(), ImageFormat.Png);
 			return 0;
+		}
+
+		private static int GenCellsPng(Netlist nl)
+		{
+			return GenPng(nl, (g, sx, sy) => { nl.DrawCells(g, sx, sy); });
+		}
+
+		private static int GenWiresPng(Netlist nl)
+		{
+			return GenPng(nl, (g, sx, sy) => { nl.DrawWires(g, sx, sy); });
+		}
+
+		private static int GenAllPng(Netlist nl)
+		{
+			return GenPng(nl, (g, sx, sy) => {
+				nl.DrawCells(g, sx, sy);
+				nl.DrawWires(g, sx, sy);
+			});
 		}
 	}
 }

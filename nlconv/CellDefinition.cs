@@ -1,6 +1,8 @@
+using System;
 using System.Text;
 using System.IO;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace nlconv
 {
@@ -231,6 +233,121 @@ namespace nlconv
 					sb.Append("not flipped");
 				return sb.ToString();
 			}
+		}
+
+		public Color GetColor(Netlist netlist)
+		{
+			switch (netlist.Types[Type].Color)
+			{
+				case "red":       return Color.Red;
+				case "lime":      return Color.Lime;
+				case "blue":      return Color.Blue;
+				case "yellow":    return Color.Yellow;
+				case "cyan":      return Color.Cyan;
+				case "magenta":   return Color.Magenta;
+				case "orange":    return Color.Orange;
+				case "purple":    return Color.Purple;
+				case "turquoise": return Color.Turquoise;
+				case "green":     return Color.Green;
+				case "black":     return Color.Black;
+			}
+			return Color.Black;
+		}
+
+		public virtual void Draw(Netlist netlist, Graphics g, float sx, float sy)
+		{
+			if (IsVirtual || !Coords.ContainsKey("") || Orientation == null || IsFlipped == null)
+				return;
+
+			Pen   pen   = new Pen(GetColor(netlist), 3.0f);
+			Brush brush = new SolidBrush(Color.FromArgb(20, IsSpare ? Color.Black : Color.White));
+
+			var p = Coords[""][0];
+			float x1 = System.Math.Min(p[0], p[2]);
+			float y1 = System.Math.Min(p[1], p[3]);
+			float x2 = System.Math.Max(p[0], p[2]);
+			float y2 = System.Math.Max(p[1], p[3]);
+			float x = x1 * sx + 1.0f;
+			float y = y1 * sy + 1.0f;
+			float w = (x2 - x1) * sx - 2.0f;
+			float h = (y2 - y1) * sy - 2.0f;
+
+			g.FillRectangle(brush, x, y, w, h);
+
+			foreach (var port in netlist.Types[Type].Ports)
+			{
+				Func<float, float, (float, float)> fix = (tx, ty) => (tx, ty);
+
+				var c = Coords.ContainsKey(port.Key) ? Coords[port.Key] : null;
+				if (c == null)
+				{
+					if (!netlist.Types[Type].Coords.ContainsKey(""))
+						continue;
+					netlist.Types[Type].Coords.TryGetValue(port.Key, out c);
+
+					var tc = netlist.Types[Type].Coords[""][0];
+					float tx_mid = (tc[0] + tc[2]) / 2.0f;
+					float ty_mid = (tc[1] + tc[3]) / 2.0f;
+					float cx_mid = (Coords[""][0][0] + Coords[""][0][2]) / 2.0f;
+					float cy_mid = (Coords[""][0][1] + Coords[""][0][3]) / 2.0f;
+
+					switch (Orientation.Value)
+					{
+					case CellOrientation.Rot0:
+						if (IsFlipped.Value)
+							fix = (tx, ty) => ((tx - tx_mid) + cx_mid, -(ty - ty_mid) + cy_mid);
+						else
+							fix = (tx, ty) => ((tx - tx_mid) + cx_mid, (ty - ty_mid) + cy_mid);
+						break;
+					case CellOrientation.Rot90:
+						if (IsFlipped.Value)
+							fix = (tx, ty) => ((ty - ty_mid) + cx_mid, (tx - tx_mid) + cy_mid);
+						else
+							fix = (tx, ty) => (-(ty - ty_mid) + cx_mid, (tx - tx_mid) + cy_mid);
+						break;
+					case CellOrientation.Rot180:
+						if (IsFlipped.Value)
+							fix = (tx, ty) => (-(tx - tx_mid) + cx_mid, (ty - ty_mid) + cy_mid);
+						else
+							fix = (tx, ty) => (-(tx - tx_mid) + cx_mid, -(ty - ty_mid) + cy_mid);
+						break;
+					case CellOrientation.Rot270:
+						if (IsFlipped.Value)
+							fix = (tx, ty) => (-(ty - ty_mid) + cx_mid, -(tx - tx_mid) + cy_mid);
+						else
+							fix = (tx, ty) => ((ty - ty_mid) + cx_mid, -(tx - tx_mid) + cy_mid);
+						break;
+					}
+				}
+				if (c == null)
+					continue;
+
+				Color col = port.Value.Color;
+				Pen small = new Pen(Color.FromArgb(100, col), 3.0f);
+				Pen big   = new Pen(Color.FromArgb(100, col), 5.0f);
+
+				foreach (var i in c)
+				{
+					if (i.Count == 2)
+					{
+						(float x, float y) pt = fix(i[0], i[1]);
+						g.DrawLine(small, pt.x * sx - 10.0f, pt.y * sy - 10.0f, pt.x * sx + 10.0f, pt.y * sy + 10.0f);
+						g.DrawLine(small, pt.x * sx - 10.0f, pt.y * sy + 10.0f, pt.x * sx + 10.0f, pt.y * sy - 10.0f);
+					}
+					else
+					{
+						PointF[] pts = new PointF[i.Count / 2];
+						for (int j = 0; j < i.Count / 2; j++)
+						{
+							(float x, float y) pt = fix(i[j * 2], i[j * 2 + 1]);
+							pts[j] = new PointF(pt.x * sx, pt.y * sy);
+						}
+						g.DrawLines(big, pts);
+					}
+				}
+			}
+
+			g.DrawRectangle(pen, x, y, w, h);
 		}
 	}
 }
