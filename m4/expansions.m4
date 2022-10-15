@@ -63,11 +63,11 @@ fi
 AC_SUBST(CSC_IMPLICIT_REFS_ARG, \$\{CSC_NO_IMPLICIT_REFS\})dnl
 
 # -langversion option
-AC_MSG_CHECKING([whether $CSC accepts -langversion:3])
-$CSC -target:exe -out:test_out.exe -langversion:3 test_in.cs >/dev/null 2>&1
+AC_MSG_CHECKING([whether $CSC accepts -langversion:7])
+$CSC -target:exe -out:test_out.exe -langversion:7 test_in.cs >/dev/null 2>&1
 if test "x${?}" = "x0"; then
 	AC_MSG_RESULT(yes)
-	AC_SUBST(CSC_LANG_ARG, -langversion:3)dnl
+	AC_SUBST(CSC_LANG_ARG, -langversion:7)dnl
 else
 	$CSC -target:exe -out:test_out.exe -langversion:Default test_in.cs >/dev/null 2>&1
 	if test "x${?}" = "x0"; then
