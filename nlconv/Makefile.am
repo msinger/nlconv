@@ -8,6 +8,7 @@ all: $(ASSEMBLY) $(LINUX_PKGCONFIG) $(ASSEMBLY_WRAPPER)
 
 FILES = \
 	AliasDefinition.cs \
+	BarProcessor.cs \
 	CellDefinition.cs \
 	CellOrientation.cs \
 	Netlist.cs \
@@ -23,6 +24,7 @@ FILES = \
 	Properties/AssemblyInfo.cs \
 	StringEscapeExtension.cs \
 	StringHtmlExtension.cs \
+	StringUnbarExtension.cs \
 	TypeDefinition.cs \
 	WireClass.cs \
 	WireConnection.cs \

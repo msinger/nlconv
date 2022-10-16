@@ -2,6 +2,7 @@ using System.Text;
 using System.IO;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace nlconv
 {
@@ -163,6 +164,18 @@ namespace nlconv
 			get
 			{
 				return "bg_" + (string.IsNullOrEmpty(Color) ? "white" : Color);
+			}
+		}
+
+		public virtual PointF? Center
+		{
+			get
+			{
+				if (!Coords.ContainsKey(""))
+					return null;
+				float x = (Coords[""][0][0] + Coords[""][0][2]) / 2.0f;
+				float y = (Coords[""][0][1] + Coords[""][0][3]) / 2.0f;
+				return new PointF(x, y);
 			}
 		}
 	}

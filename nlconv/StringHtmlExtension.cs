@@ -24,17 +24,17 @@ namespace nlconv
 
 		public static string ToHtml(this string s)
 		{
-			return ProcessBars(s, "<span style=\"text-decoration:overline\">", "</span>", " ", toHtmlMap);
+			return BarProcessor.ProcessBars(s, "<span style=\"text-decoration:overline\">", "</span>", " ", toHtmlMap);
 		}
 
 		public static string ToHtmlName(this string n)
 		{
-			return ProcessBars(n, "<span style=\"text-decoration:overline\">", "</span>", "&nbsp;", toHtmlNameMap);
+			return BarProcessor.ProcessBars(n, "<span style=\"text-decoration:overline\">", "</span>", "&nbsp;", toHtmlNameMap);
 		}
 
 		public static string ToNameWithoutBars(this string n)
 		{
-			return ProcessBars(n, "", "", " ", toHtmlNameWithoutBarsMap);
+			return BarProcessor.ProcessBars(n, "", "", " ", toHtmlNameWithoutBarsMap);
 		}
 
 		public static bool IsHtmlIdChar(this char c)
@@ -64,69 +64,6 @@ namespace nlconv
 					sb.Append('_');
 				}
 			}
-			return sb.ToString();
-		}
-
-		private static string ProcessBars(string n, string barOn, string barOff, string ws, Dictionary<char, string> map)
-		{
-			StringBuilder sb = new StringBuilder();
-			int barMode = 0;
-			foreach (char c in n)
-			{
-				if (c == '~' && barMode == 0)
-				{
-					barMode = 1;
-					continue;
-				}
-				else if (barMode == 1)
-				{
-					if (c == '~')
-					{
-						barMode = 0;
-						sb.Append('~');
-						continue;
-					}
-					sb.Append(barOn);
-					if (c == '{')
-					{
-						barMode = 2;
-						continue;
-					}
-					barMode = 3;
-				}
-				else if (c == '}' && barMode == 2)
-				{
-					barMode = 0;
-					sb.Append(barOff);
-					continue;
-				}
-				else if (c == '~' && barMode == 3)
-				{
-					barMode = 4;
-					continue;
-				}
-				else if (barMode == 4)
-				{
-					if (c == '~')
-					{
-						barMode = 3;
-						sb.Append('~');
-						continue;
-					}
-					sb.Append(barOff);
-					barMode = 0;
-				}
-				if (map.ContainsKey(c))
-					sb.Append(map[c]);
-				else if (char.IsWhiteSpace(c))
-					sb.Append(ws);
-				else if (!char.IsControl(c))
-					sb.Append(c);
-			}
-			if (barMode == 1)
-				sb.Append('~');
-			else if (barMode > 1)
-				sb.Append(barOff);
 			return sb.ToString();
 		}
 	}

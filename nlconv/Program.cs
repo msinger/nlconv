@@ -18,6 +18,7 @@ namespace nlconv
 			case "--html":
 			case "--png-cells":
 			case "--png-wires":
+			case "--png-labels":
 			case "--png":
 				break;
 			default:
@@ -27,6 +28,7 @@ namespace nlconv
 				Console.Error.WriteLine("  --html        Convert netlist from STDIN to HTML on STDOUT.");
 				Console.Error.WriteLine("  --png-cells   Convert netlist from STDIN to PNG containing all cells on STDOUT.");
 				Console.Error.WriteLine("  --png-wires   Convert netlist from STDIN to PNG containing all wires on STDOUT.");
+				Console.Error.WriteLine("  --png-labels  Convert netlist from STDIN to PNG containing all labels on STDOUT.");
 				Console.Error.WriteLine("  --png         Convert netlist from STDIN to PNG containing everything on STDOUT.");
 				Console.Error.WriteLine();
 				Console.Error.WriteLine("Without option, nlconv.exe just reads netlist from STDIN");
@@ -54,6 +56,8 @@ namespace nlconv
 				return GenCellsPng(nl);
 			case "--png-wires":
 				return GenWiresPng(nl);
+			case "--png-labels":
+				return GenLabelsPng(nl);
 			case "--png":
 				return GenAllPng(nl);
 			}
@@ -153,11 +157,17 @@ namespace nlconv
 			return GenPng(nl, (g, sx, sy) => { nl.DrawWires(g, sx, sy); });
 		}
 
+		private static int GenLabelsPng(Netlist nl)
+		{
+			return GenPng(nl, (g, sx, sy) => { nl.DrawLabels(g, sx, sy); });
+		}
+
 		private static int GenAllPng(Netlist nl)
 		{
 			return GenPng(nl, (g, sx, sy) => {
 				nl.DrawCells(g, sx, sy);
 				nl.DrawWires(g, sx, sy);
+				nl.DrawLabels(g, sx, sy);
 			});
 		}
 	}

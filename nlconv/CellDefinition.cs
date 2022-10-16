@@ -3,6 +3,7 @@ using System.Text;
 using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace nlconv
 {
@@ -254,14 +255,15 @@ namespace nlconv
 			return Color.Black;
 		}
 
-		public virtual void Draw(Netlist netlist, Graphics g, float sx, float sy)
+		public virtual bool CanDraw
 		{
-			if (IsVirtual || !Coords.ContainsKey("") || Orientation == null || IsFlipped == null)
-				return;
+			get { return !IsVirtual && Coords.ContainsKey("") && Orientation != null && IsFlipped != null; }
+		}
 
-			Pen   pen   = new Pen(GetColor(netlist), 3.0f);
-			Brush brush = new SolidBrush(Color.FromArgb(20, IsSpare ? Color.Black : Color.White));
-
+		public virtual RectangleF? GetBoundingBox(float sx, float sy)
+		{
+			if (!Coords.ContainsKey(""))
+				return null;
 			var p = Coords[""][0];
 			float x1 = System.Math.Min(p[0], p[2]);
 			float y1 = System.Math.Min(p[1], p[3]);
@@ -271,53 +273,94 @@ namespace nlconv
 			float y = y1 * sy + 1.0f;
 			float w = (x2 - x1) * sx - 2.0f;
 			float h = (y2 - y1) * sy - 2.0f;
+			return new RectangleF(x, y, w, h);
+		}
 
-			g.FillRectangle(brush, x, y, w, h);
+		public virtual PointF? Center
+		{
+			get
+			{
+				if (!Coords.ContainsKey(""))
+					return null;
+				float x = (Coords[""][0][0] + Coords[""][0][2]) / 2.0f;
+				float y = (Coords[""][0][1] + Coords[""][0][3]) / 2.0f;
+				return new PointF(x, y);
+			}
+		}
+
+		public virtual Func<float, float, (float, float)> GetTransformation(Netlist netlist)
+		{
+			if (!CanDraw || !netlist.Types[Type].Center.HasValue)
+				return null;
+
+			var cmid = Center.Value;
+			var tmid = netlist.Types[Type].Center.Value;
+
+			Func<float, float, (float, float)> transform = null;
+
+			switch (Orientation.Value)
+			{
+			case CellOrientation.Rot0:
+				if (IsFlipped.Value)
+					transform = (x, y) => ((x - tmid.X) + cmid.X, -(y - tmid.Y) + cmid.Y);
+				else
+					transform = (x, y) => ((x - tmid.X) + cmid.X, (y - tmid.Y) + cmid.Y);
+				break;
+			case CellOrientation.Rot90:
+				if (IsFlipped.Value)
+					transform = (x, y) => ((y - tmid.Y) + cmid.X, (x - tmid.X) + cmid.Y);
+				else
+					transform = (x, y) => (-(y - tmid.Y) + cmid.X, (x - tmid.X) + cmid.Y);
+				break;
+			case CellOrientation.Rot180:
+				if (IsFlipped.Value)
+					transform = (x, y) => (-(x - tmid.X) + cmid.X, (y - tmid.Y) + cmid.Y);
+				else
+					transform = (x, y) => (-(x - tmid.X) + cmid.X, -(y - tmid.Y) + cmid.Y);
+				break;
+			case CellOrientation.Rot270:
+				if (IsFlipped.Value)
+					transform = (x, y) => (-(y - tmid.Y) + cmid.X, -(x - tmid.X) + cmid.Y);
+				else
+					transform = (x, y) => ((y - tmid.Y) + cmid.X, -(x - tmid.X) + cmid.Y);
+				break;
+			}
+
+			return transform;
+		}
+
+		protected static void DrawCross(Graphics g, Pen pen, float x, float y, float sx, float sy)
+		{
+			g.DrawLine(pen, x * sx - 10.0f, y * sy - 10.0f, x * sx + 10.0f, y * sy + 10.0f);
+			g.DrawLine(pen, x * sx - 10.0f, y * sy + 10.0f, x * sx + 10.0f, y * sy - 10.0f);
+		}
+
+		public virtual void Draw(Netlist netlist, Graphics g, float sx, float sy)
+		{
+			if (!CanDraw)
+				return;
+
+			Pen   pen   = new Pen(GetColor(netlist), 3.0f);
+			Brush brush = new SolidBrush(Color.FromArgb(20, IsSpare ? Color.Black : Color.White));
+
+			var box = GetBoundingBox(sx, sy).Value;
+
+			g.FillRectangle(brush, box);
+			g.DrawRectangle(pen, box.X, box.Y, box.Width, box.Height);
+
+			Func<float, float, (float, float)> identity  = (x, y) => (x, y);
+			Func<float, float, (float, float)> transform = GetTransformation(netlist);
 
 			foreach (var port in netlist.Types[Type].Ports)
 			{
-				Func<float, float, (float, float)> fix = (tx, ty) => (tx, ty);
-
+				var fix = identity;
 				var c = Coords.ContainsKey(port.Key) ? Coords[port.Key] : null;
 				if (c == null)
 				{
-					if (!netlist.Types[Type].Coords.ContainsKey(""))
+					if (!netlist.Types[Type].Center.HasValue)
 						continue;
 					netlist.Types[Type].Coords.TryGetValue(port.Key, out c);
-
-					var tc = netlist.Types[Type].Coords[""][0];
-					float tx_mid = (tc[0] + tc[2]) / 2.0f;
-					float ty_mid = (tc[1] + tc[3]) / 2.0f;
-					float cx_mid = (Coords[""][0][0] + Coords[""][0][2]) / 2.0f;
-					float cy_mid = (Coords[""][0][1] + Coords[""][0][3]) / 2.0f;
-
-					switch (Orientation.Value)
-					{
-					case CellOrientation.Rot0:
-						if (IsFlipped.Value)
-							fix = (tx, ty) => ((tx - tx_mid) + cx_mid, -(ty - ty_mid) + cy_mid);
-						else
-							fix = (tx, ty) => ((tx - tx_mid) + cx_mid, (ty - ty_mid) + cy_mid);
-						break;
-					case CellOrientation.Rot90:
-						if (IsFlipped.Value)
-							fix = (tx, ty) => ((ty - ty_mid) + cx_mid, (tx - tx_mid) + cy_mid);
-						else
-							fix = (tx, ty) => (-(ty - ty_mid) + cx_mid, (tx - tx_mid) + cy_mid);
-						break;
-					case CellOrientation.Rot180:
-						if (IsFlipped.Value)
-							fix = (tx, ty) => (-(tx - tx_mid) + cx_mid, (ty - ty_mid) + cy_mid);
-						else
-							fix = (tx, ty) => (-(tx - tx_mid) + cx_mid, -(ty - ty_mid) + cy_mid);
-						break;
-					case CellOrientation.Rot270:
-						if (IsFlipped.Value)
-							fix = (tx, ty) => (-(ty - ty_mid) + cx_mid, -(tx - tx_mid) + cy_mid);
-						else
-							fix = (tx, ty) => ((ty - ty_mid) + cx_mid, -(tx - tx_mid) + cy_mid);
-						break;
-					}
+					fix = transform;
 				}
 				if (c == null)
 					continue;
@@ -331,11 +374,12 @@ namespace nlconv
 					if (i.Count == 2)
 					{
 						(float x, float y) pt = fix(i[0], i[1]);
-						g.DrawLine(small, pt.x * sx - 10.0f, pt.y * sy - 10.0f, pt.x * sx + 10.0f, pt.y * sy + 10.0f);
-						g.DrawLine(small, pt.x * sx - 10.0f, pt.y * sy + 10.0f, pt.x * sx + 10.0f, pt.y * sy - 10.0f);
+						DrawCross(g, small, pt.x, pt.y, sx, sy);
 					}
 					else
 					{
+						// Draw line:
+						/*
 						PointF[] pts = new PointF[i.Count / 2];
 						for (int j = 0; j < i.Count / 2; j++)
 						{
@@ -343,11 +387,64 @@ namespace nlconv
 							pts[j] = new PointF(pt.x * sx, pt.y * sy);
 						}
 						g.DrawLines(big, pts);
+						*/
+
+						// Draw crosses:
+						for (int j = 0; j < i.Count / 2; j++)
+						{
+							(float x, float y) pt = fix(i[j * 2], i[j * 2 + 1]);
+							DrawCross(g, small, pt.x, pt.y, sx, sy);
+						}
 					}
 				}
 			}
+		}
 
-			g.DrawRectangle(pen, x, y, w, h);
+		public virtual void DrawLabels(Graphics g, float sx, float sy)
+		{
+			if (!CanDraw)
+				return;
+
+			var box = GetBoundingBox(sx, sy).Value;
+
+			float fsize = 15.0f;
+			float min = System.Math.Min(box.Width, box.Height);
+			float max = System.Math.Max(box.Width, box.Height);
+			if (min > 300.0f)  fsize = 50.0f;
+			if (min > 600.0f)  fsize = 100.0f;
+			if (min > 1500.0f) fsize = 300.0f;
+
+			Font font = new Font(FontFamily.GenericMonospace, fsize);
+
+			Bitmap bmp = new Bitmap((int)max, (int)max, PixelFormat.Format32bppArgb);
+			using (Graphics gt = Graphics.FromImage(bmp))
+			{
+				gt.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+				gt.TranslateTransform(max / 2.0f, max / 2.0f);
+
+				var tbox = new RectangleF(-(max / 2.0f), -(max / 2.0f), max, max);
+
+				var format = new StringFormat(StringFormatFlags.NoClip |
+				                              StringFormatFlags.NoWrap);
+				format.Alignment     = StringAlignment.Center;
+				format.LineAlignment = StringAlignment.Center;
+
+				switch (Orientation.Value)
+				{
+					case CellOrientation.Rot0:
+					case CellOrientation.Rot180:
+						gt.RotateTransform(90.0f);
+						break;
+					case CellOrientation.Rot90:
+						gt.RotateTransform(180.0f);
+						break;
+				}
+
+				gt.DrawString(Name.ToUpperInvariant().Unbar(), font, Brushes.Black, tbox, format);
+			}
+
+			g.DrawImage(bmp, box.X - max / 2.0f + box.Width / 2.0f, box.Y - max / 2.0f + box.Height / 2.0f);
 		}
 	}
 }

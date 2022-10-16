@@ -768,5 +768,11 @@ namespace nlconv
 			foreach (var x in Wires)
 				x.Value.Draw(g, sx, sy);
 		}
+
+		public virtual void DrawLabels(Graphics g, float sx, float sy)
+		{
+			foreach (var x in Cells)
+				x.Value.DrawLabels(g, sx, sy);
+		}
 	}
 }
