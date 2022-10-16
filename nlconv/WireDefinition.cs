@@ -174,7 +174,7 @@ namespace nlconv
 					case WireClass.Data:    return Color.Blue;
 					case WireClass.Address: return Color.Yellow;
 					case WireClass.Reset:   return Color.Turquoise;
-					case WireClass.Analog:  return Color.Lime;
+					case WireClass.Analog:  return Color.Green;
 				}
 				return Color.Blue;
 			}
