@@ -30,10 +30,10 @@ namespace nlconv
 		{
 			if ((object)other == null)
 				return 1;
-			int i = Cell.ToNameWithoutBars().CompareTo(other.Cell.ToNameWithoutBars());
+			int i = Cell.WithoutBars().CompareTo(other.Cell.WithoutBars());
 			if (i != 0)
 				return i;
-			return Port.ToNameWithoutBars().CompareTo(other.Port.ToNameWithoutBars());
+			return Port.WithoutBars().CompareTo(other.Port.WithoutBars());
 		}
 
 		public int CompareTo(object other)

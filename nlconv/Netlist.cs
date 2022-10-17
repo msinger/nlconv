@@ -72,7 +72,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			return new PortDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Value.String, d);
+			return new PortDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Value.String.CanonicalizeBars(), d);
 		}
 
 		protected static IList<PortDefinition> ParsePortDefinitionList(ref LinkedListNode<LexerToken> n)
@@ -128,7 +128,7 @@ namespace nlconv
 				}
 			}
 
-			TypeDefinition t = new TypeDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color, desc, doc);
+			TypeDefinition t = new TypeDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name.CanonicalizeBars(), color, desc, doc);
 
 			foreach (var p in ports)
 			{
@@ -244,7 +244,7 @@ namespace nlconv
 			string name = "";
 			if (n.Value.Type == LexerTokenType.Name)
 			{
-				name = n.Value.String;
+				name = n.Value.String.CanonicalizeBars();
 				n = n.Next;
 			}
 
@@ -283,7 +283,7 @@ namespace nlconv
 
 			if (n.Value.Type != LexerTokenType.Name)
 				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell type expected.");
-			string t = n.Value.String;
+			string t = n.Value.String.CanonicalizeBars();
 			n = n.Next;
 
 			CellOrientation? o;
@@ -319,7 +319,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			CellDefinition c = new CellDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String, t, o, f, sp, vr, cp, tr, desc);
+			CellDefinition c = new CellDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc);
 
 			foreach (var kvp in coords)
 				c.AddCoords(kvp.Key, kvp.Value);
@@ -375,7 +375,7 @@ namespace nlconv
 				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Port name expected.");
 			n = n.Next;
 
-			return new WireConnection(me.Value.Pos, me.Value.Line, me.Value.Col, me.Value.String, me.Next.Next.Value.String);
+			return new WireConnection(me.Value.Pos, me.Value.Line, me.Value.Col, me.Value.String.CanonicalizeBars(), me.Next.Next.Value.String.CanonicalizeBars());
 		}
 
 		protected static IList<WireConnection> ParseWireConnectionList(ref LinkedListNode<LexerToken> n)
@@ -427,7 +427,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			WireDefinition w = new WireDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String, cls, desc);
+			WireDefinition w = new WireDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), cls, desc);
 
 			w.Sources.AddRange(sources);
 
@@ -456,10 +456,12 @@ namespace nlconv
 			List<string> l = new List<string>();
 			while (n.Value.Type == LexerTokenType.Name)
 			{
-				if (l.Contains(n.Value.String))
+				string s = n.Value.String.CanonicalizeBars();
+
+				if (l.Contains(s))
 					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Duplicate alias found.");
 
-				l.Add(n.Value.String);
+				l.Add(s);
 				n = n.Next;
 			}
 
@@ -474,7 +476,7 @@ namespace nlconv
 				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell name expected.");
 			n = n.Next;
 
-			AliasDefinition a = new AliasDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, n.Previous.Value.String);
+			AliasDefinition a = new AliasDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, n.Previous.Value.String.CanonicalizeBars());
 			a.Alias.AddRange(l);
 
 			ParseEOT(n);

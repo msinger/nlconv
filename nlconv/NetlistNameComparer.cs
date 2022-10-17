@@ -8,7 +8,7 @@ namespace nlconv
 
 		public override int Compare(string x, string y)
 		{
-			return x.ToNameWithoutBars().CompareTo(y.ToNameWithoutBars());
+			return x.WithoutBars().CompareTo(y.WithoutBars());
 		}
 	}
 }

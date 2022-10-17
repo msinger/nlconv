@@ -6,9 +6,8 @@ namespace nlconv
 {
 	public static class StringHtmlExtension
 	{
-		private static readonly Dictionary<char, string> toHtmlMap                = new Dictionary<char, string>();
-		private static readonly Dictionary<char, string> toHtmlNameMap            = new Dictionary<char, string>();
-		private static readonly Dictionary<char, string> toHtmlNameWithoutBarsMap = new Dictionary<char, string>();
+		private static readonly Dictionary<char, string> toHtmlMap     = new Dictionary<char, string>();
+		private static readonly Dictionary<char, string> toHtmlNameMap = new Dictionary<char, string>();
 
 		static StringHtmlExtension()
 		{
@@ -32,11 +31,6 @@ namespace nlconv
 			return BarProcessor.ProcessBars(n, "<span style=\"text-decoration:overline\">", "</span>", "&nbsp;", toHtmlNameMap);
 		}
 
-		public static string ToNameWithoutBars(this string n)
-		{
-			return BarProcessor.ProcessBars(n, "", "", " ", toHtmlNameWithoutBarsMap);
-		}
-
 		public static bool IsHtmlIdChar(this char c)
 		{
 			if (c >= 'a' && c <= 'z')
@@ -51,7 +45,7 @@ namespace nlconv
 		public static string ToHtmlId(this string n)
 		{
 			StringBuilder sb = new StringBuilder();
-			foreach (char c in n)
+			foreach (char c in n.CanonicalizeBars())
 			{
 				if (c.IsHtmlIdChar())
 				{
