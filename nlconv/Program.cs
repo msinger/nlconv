@@ -20,6 +20,7 @@ namespace nlconv
 			case "--png-wires":
 			case "--png-labels":
 			case "--png":
+			case "--js":
 				break;
 			default:
 				Console.Error.WriteLine("Usage: nlconv.exe [<OPTIONS>]");
@@ -30,6 +31,7 @@ namespace nlconv
 				Console.Error.WriteLine("  --png-wires   Convert netlist from STDIN to PNG containing all wires on STDOUT.");
 				Console.Error.WriteLine("  --png-labels  Convert netlist from STDIN to PNG containing all labels on STDOUT.");
 				Console.Error.WriteLine("  --png         Convert netlist from STDIN to PNG containing everything on STDOUT.");
+				Console.Error.WriteLine("  --js          Convert netlist from STDIN to Java Script containing all coordinates on STDOUT.");
 				Console.Error.WriteLine();
 				Console.Error.WriteLine("Without option, nlconv.exe just reads netlist from STDIN");
 				Console.Error.WriteLine("and checks if there are no errors.");
@@ -60,6 +62,8 @@ namespace nlconv
 				return GenLabelsPng(nl);
 			case "--png":
 				return GenAllPng(nl);
+			case "--js":
+				return GenJavaScript(nl);
 			}
 		}
 
@@ -169,6 +173,12 @@ namespace nlconv
 				nl.DrawWires(g, sx, sy);
 				nl.DrawLabels(g, sx, sy);
 			});
+		}
+
+		private static int GenJavaScript(Netlist nl)
+		{
+			nl.ToJavaScript(Console.Out);
+			return 0;
 		}
 	}
 }

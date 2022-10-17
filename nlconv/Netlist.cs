@@ -776,5 +776,93 @@ namespace nlconv
 			foreach (var x in Cells)
 				x.Value.DrawLabels(g, sx, sy);
 		}
+
+		public virtual void ToJavaScript(TextWriter s)
+		{
+			var c = new Dictionary<string, Dictionary<string, (string, string, List<float>)>>();
+			foreach (var x in Cells)
+			{
+				if (!x.Value.Coords.ContainsKey(""))
+					continue;
+				var n = x.Value.Name;
+				var wb = n.WithoutBars();
+				if (!c.ContainsKey(wb))
+					c[wb] = new Dictionary<string, (string, string, List<float>)>();
+				c[wb][n] = (n.ToHtml(), n.ToHtmlId(), x.Value.Coords[""][0]);
+			}
+
+			var w = new Dictionary<string, Dictionary<string, (string, string, List<List<float>>)>>();
+			foreach (var x in Wires)
+			{
+				if (x.Value.Coords.Count == 0)
+					continue;
+				var n = x.Value.Name;
+				var wb = n.WithoutBars();
+				if (!w.ContainsKey(wb))
+					w[wb] = new Dictionary<string, (string, string, List<List<float>>)>();
+				w[wb][n] = (n.ToHtml(), n.ToHtmlId(), x.Value.Coords);
+			}
+
+			s.WriteLine("var cells={");
+			foreach (var i in c)
+			{
+				s.Write("\"");
+				s.Write(i.Key);
+				s.Write("\":{");
+				foreach (var j in i.Value)
+				{
+					s.Write("\"");
+					s.Write(j.Key);
+					s.Write("\":{h:\"");
+					(string html, string anchor, List<float> l) tp = j.Value;
+					s.Write(tp.html.ToJavaScriptString());
+					s.Write("\",a:\"c_");
+					s.Write(tp.anchor.ToJavaScriptString());
+					s.Write("\",l:[");
+					s.Write(tp.l[0].ToString(CultureInfo.InvariantCulture));
+					s.Write(",");
+					s.Write(tp.l[1].ToString(CultureInfo.InvariantCulture));
+					s.Write(",");
+					s.Write(tp.l[2].ToString(CultureInfo.InvariantCulture));
+					s.Write(",");
+					s.Write(tp.l[3].ToString(CultureInfo.InvariantCulture));
+					s.Write("]},");
+				}
+				s.WriteLine("},");
+			}
+			s.WriteLine("};");
+
+			s.WriteLine("var wires={");
+			foreach (var i in w)
+			{
+				s.Write("\"");
+				s.Write(i.Key);
+				s.Write("\":{");
+				foreach (var j in i.Value)
+				{
+					s.Write("\"");
+					s.Write(j.Key);
+					s.Write("\":{h:\"");
+					(string html, string anchor, List<List<float>> l) tp = j.Value;
+					s.Write(tp.html.ToJavaScriptString());
+					s.Write("\",a:\"w_");
+					s.Write(tp.anchor.ToJavaScriptString());
+					s.Write("\",l:[");
+					foreach (var k in tp.l)
+					{
+						s.Write("[");
+						foreach (var l in k)
+						{
+							s.Write(l.ToString(CultureInfo.InvariantCulture));
+							s.Write(",");
+						}
+						s.Write("],");
+					}
+					s.Write("]},");
+				}
+				s.WriteLine("},");
+			}
+			s.WriteLine("};");
+		}
 	}
 }

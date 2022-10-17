@@ -43,13 +43,16 @@ Generate PNG image containing everything:
 nlconv --png <input.nl >output.png
 ```
 
+Generate Java Script containing all coordinates to be used by the [map](https://github.com/msinger/dmg_cpu_b_map):
+```
+nlconv --js <input.nl >output.js
+```
+
 
 TODO
 ----
 
 Not yet implemented, but planned:
-* Generate Java Script code containing the coordinates for cells and wires to be used by the
-  [map](https://github.com/msinger/dmg_cpu_b_map).
 * Generate Verilog code containing all cells and wires.
 * Add statement for adding custom labels to PNGs.
 
