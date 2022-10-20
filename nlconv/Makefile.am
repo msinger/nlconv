@@ -9,8 +9,10 @@ all: $(ASSEMBLY) $(LINUX_PKGCONFIG) $(ASSEMBLY_WRAPPER)
 FILES = \
 	AliasDefinition.cs \
 	BarProcessor.cs \
+	Box.cs \
 	CellDefinition.cs \
 	CellOrientation.cs \
+	Line.cs \
 	Netlist.cs \
 	NetlistFormatException.cs \
 	NetlistLexerBase.cs \
@@ -26,6 +28,7 @@ FILES = \
 	StringHtmlExtension.cs \
 	StringUnbarExtension.cs \
 	TypeDefinition.cs \
+	Vector.cs \
 	WireClass.cs \
 	WireConnection.cs \
 	WireDefinition.cs
