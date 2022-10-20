@@ -71,15 +71,17 @@ namespace nlconv
 
 		public void ToJavaScript(TextWriter s)
 		{
-			s.Write("{c:[");
-			s.Write(Center.X.ToString(CultureInfo.InvariantCulture));
+			s.Write("{p:[");
+			s.Write((Center.X - HalfSize).ToString(CultureInfo.InvariantCulture));
 			s.Write(",");
-			s.Write(Center.Y.ToString(CultureInfo.InvariantCulture));
-			s.Write("],h:");
-			s.Write(HalfSize.ToString(CultureInfo.InvariantCulture));
+			s.Write((Center.Y - HalfSize).ToString(CultureInfo.InvariantCulture));
+			s.Write(",");
+			s.Write((Center.X + HalfSize).ToString(CultureInfo.InvariantCulture));
+			s.Write(",");
+			s.Write((Center.Y + HalfSize).ToString(CultureInfo.InvariantCulture));
 			if (IsLeaf)
 			{
-				s.Write(",l:true,cl:[");
+				s.Write("],c:[");
 				foreach (var x in Content)
 				{
 					var c = x as CellDefinition;
@@ -89,7 +91,7 @@ namespace nlconv
 					s.Write(c.Name.ToJavaScriptString());
 					s.Write("\",");
 				}
-				s.Write("],wl:[");
+				s.Write("],w:[");
 				foreach (var x in Content)
 				{
 					var w = x as WireDefinition;
@@ -103,14 +105,15 @@ namespace nlconv
 			}
 			else
 			{
-				s.Write(",l:false,nw:");
+				s.Write("],d:[");
 				NW.ToJavaScript(s);
-				s.Write(",ne:");
+				s.Write(",");
 				NE.ToJavaScript(s);
-				s.Write(",sw:");
+				s.Write(",");
 				SW.ToJavaScript(s);
-				s.Write(",se:");
+				s.Write(",");
 				SE.ToJavaScript(s);
+				s.Write("]");
 			}
 			s.WriteLine("}");
 		}

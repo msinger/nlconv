@@ -779,7 +779,7 @@ namespace nlconv
 
 		public virtual void ToJavaScript(TextWriter s)
 		{
-			var tree = new QuadTree(new Vector(-128.0f, 128.0f), 128.0f, 64, 8);
+			var tree = new QuadTree(new Vector(-128.0f, 128.0f), 128.0f, 64, 6);
 
 			var c = new Dictionary<string, List<string>>();
 			s.WriteLine("var cells_cn={");
