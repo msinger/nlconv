@@ -779,12 +779,15 @@ namespace nlconv
 
 		public virtual void ToJavaScript(TextWriter s)
 		{
+			var tree = new QuadTree(new Vector(-128.0f, 128.0f), 128.0f, 64, 8);
+
 			var c = new Dictionary<string, List<string>>();
 			s.WriteLine("var cells_cn={");
 			foreach (var x in Cells)
 			{
 				if (!x.Value.Coords.ContainsKey(""))
 					continue;
+				tree.Push(x.Value);
 				var n = x.Value.Name;
 				var wb = n.WithoutBars().ToLowerInvariant();
 				s.Write("\"");
@@ -821,6 +824,7 @@ namespace nlconv
 			{
 				if (x.Value.Coords.Count == 0)
 					continue;
+				tree.Push(x.Value);
 				var n = x.Value.Name;
 				var wb = n.WithoutBars().ToLowerInvariant();
 				s.Write("\"");
@@ -878,6 +882,10 @@ namespace nlconv
 				s.WriteLine("],");
 			}
 			s.WriteLine("};");
+
+			s.Write("var qtree=");
+			tree.ToJavaScript(s);
+			s.WriteLine(";");
 		}
 	}
 }

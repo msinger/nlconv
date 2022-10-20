@@ -5,7 +5,7 @@ using System.Drawing;
 
 namespace nlconv
 {
-	public class WireDefinition : ParserToken
+	public class WireDefinition : ParserToken, IIntersectable
 	{
 		public readonly string               Name;
 		public readonly WireClass            Class;
@@ -190,6 +190,23 @@ namespace nlconv
 					pts[i] = new PointF(c[i * 2] * sx, c[i * 2 + 1] * sy);
 				g.DrawLines(pen, pts);
 			}
+		}
+
+		public virtual bool Intersects(Box b)
+		{
+			float w = 0.079f;
+
+			foreach (var c in Coords)
+			{
+				for (int i = 1; i < c.Count / 2; i++)
+				{
+					Line l = new Line(new Vector(c[(i - 1) * 2], c[(i - 1) * 2 + 1]),
+					                  new Vector(c[i * 2], c[i * 2 + 1]));
+					if (b.SegmentIntersects(l, w / 2.0f))
+						return true;
+				}
+			}
+			return false;
 		}
 	}
 }

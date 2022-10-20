@@ -12,6 +12,7 @@ FILES = \
 	Box.cs \
 	CellDefinition.cs \
 	CellOrientation.cs \
+	IIntersectable.cs \
 	Line.cs \
 	Netlist.cs \
 	NetlistFormatException.cs \
@@ -24,6 +25,7 @@ FILES = \
 	PortDirection.cs \
 	Program.cs \
 	Properties/AssemblyInfo.cs \
+	QuadTree.cs \
 	StringEscapeExtension.cs \
 	StringHtmlExtension.cs \
 	StringUnbarExtension.cs \

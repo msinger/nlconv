@@ -7,7 +7,7 @@ using System.Drawing.Imaging;
 
 namespace nlconv
 {
-	public class CellDefinition : ParserToken
+	public class CellDefinition : ParserToken, IIntersectable
 	{
 		public readonly string           Name;
 		public readonly string           Type;
@@ -265,10 +265,10 @@ namespace nlconv
 			if (!Coords.ContainsKey(""))
 				return null;
 			var p = Coords[""][0];
-			float x1 = System.Math.Min(p[0], p[2]);
-			float y1 = System.Math.Min(p[1], p[3]);
-			float x2 = System.Math.Max(p[0], p[2]);
-			float y2 = System.Math.Max(p[1], p[3]);
+			float x1 = MathF.Min(p[0], p[2]);
+			float y1 = MathF.Min(p[1], p[3]);
+			float x2 = MathF.Max(p[0], p[2]);
+			float y2 = MathF.Max(p[1], p[3]);
 			float x = x1 * sx + 1.0f;
 			float y = y1 * sy + 1.0f;
 			float w = (x2 - x1) * sx - 2.0f;
@@ -408,8 +408,8 @@ namespace nlconv
 			var box = GetBoundingBox(sx, sy).Value;
 
 			float fsize = 15.0f;
-			float min = System.Math.Min(box.Width, box.Height);
-			float max = System.Math.Max(box.Width, box.Height);
+			float min = MathF.Min(box.Width, box.Height);
+			float max = MathF.Max(box.Width, box.Height);
 			if (min > 300.0f)  fsize = 50.0f;
 			if (min > 600.0f)  fsize = 100.0f;
 			if (min > 1500.0f) fsize = 300.0f;
@@ -445,6 +445,18 @@ namespace nlconv
 			}
 
 			g.DrawImage(bmp, box.X - max / 2.0f + box.Width / 2.0f, box.Y - max / 2.0f + box.Height / 2.0f);
+		}
+
+		public virtual bool Intersects(Box b)
+		{
+			if (!Coords.ContainsKey(""))
+				return false;
+			var p = Coords[""][0];
+			float x1 = MathF.Min(p[0], p[2]);
+			float y1 = MathF.Min(p[1], p[3]);
+			float x2 = MathF.Max(p[0], p[2]);
+			float y2 = MathF.Max(p[1], p[3]);
+			return b.Intersects(new Box(new Vector(x1, y1), new Vector(x2, y2)));
 		}
 	}
 }
