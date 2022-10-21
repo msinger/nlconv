@@ -14,7 +14,7 @@ namespace nlconv
 
 		public readonly List<IIntersectable> Content;
 
-		public QuadTree NW, NE, SW, SE;
+		public QuadTree[] Sub;
 
 		public QuadTree(Vector center, float halfSize, int leafSize, int maxDepth)
 		{
@@ -27,7 +27,7 @@ namespace nlconv
 
 		public bool IsLeaf
 		{
-			get { return NW == null; }
+			get { return Sub == null; }
 		}
 
 		public Box Box
@@ -51,10 +51,12 @@ namespace nlconv
 			else if (Content.Count > LeafSize && MaxDepth > 0)
 			{
 				float hs = HalfSize / 2.0f;
-				NW = new QuadTree(new Vector(Center.X + hs, Center.Y - hs), hs, LeafSize, MaxDepth - 1);
-				NE = new QuadTree(new Vector(Center.X + hs, Center.Y + hs), hs, LeafSize, MaxDepth - 1);
-				SW = new QuadTree(new Vector(Center.X - hs, Center.Y - hs), hs, LeafSize, MaxDepth - 1);
-				SE = new QuadTree(new Vector(Center.X - hs, Center.Y + hs), hs, LeafSize, MaxDepth - 1);
+				Sub = new QuadTree[] {
+					new QuadTree(new Vector(Center.X + hs, Center.Y - hs), hs, LeafSize, MaxDepth - 1),
+					new QuadTree(new Vector(Center.X + hs, Center.Y + hs), hs, LeafSize, MaxDepth - 1),
+					new QuadTree(new Vector(Center.X - hs, Center.Y - hs), hs, LeafSize, MaxDepth - 1),
+					new QuadTree(new Vector(Center.X - hs, Center.Y + hs), hs, LeafSize, MaxDepth - 1)
+				};
 				foreach (var i in Content)
 					PushDown(i);
 			}
@@ -63,10 +65,8 @@ namespace nlconv
 
 		private void PushDown(IIntersectable o)
 		{
-			NW.Push(o);
-			NE.Push(o);
-			SW.Push(o);
-			SE.Push(o);
+			foreach (var s in Sub)
+				s.Push(o);
 		}
 
 		public void ToJavaScript(TextWriter s)
@@ -106,13 +106,11 @@ namespace nlconv
 			else
 			{
 				s.Write("],d:[");
-				NW.ToJavaScript(s);
-				s.Write(",");
-				NE.ToJavaScript(s);
-				s.Write(",");
-				SW.ToJavaScript(s);
-				s.Write(",");
-				SE.ToJavaScript(s);
+				foreach (var x in Sub)
+				{
+					x.ToJavaScript(s);
+					s.Write(",");
+				}
 				s.Write("]");
 			}
 			s.WriteLine("}");
