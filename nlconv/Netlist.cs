@@ -831,7 +831,7 @@ namespace nlconv
 				s.Write(n.ToJavaScriptString());
 				s.Write("\":{h:\"");
 				s.Write(n.ToUpperInvariant().ToHtml().ToJavaScriptString());
-				s.Write("\",a:\"c_");
+				s.Write("\",a:\"w_");
 				s.Write(n.ToHtmlId().ToJavaScriptString());
 				s.Write("\",l:[");
 				foreach (var y in x.Value.Coords)
