@@ -791,11 +791,11 @@ namespace nlconv
 				var n = x.Value.Name;
 				var wb = n.WithoutBars().ToLowerInvariant();
 				s.Write("\"");
-				s.Write(n.ToJavaScriptString());
+				s.Write(n.Escape());
 				s.Write("\":{h:\"");
-				s.Write(n.ToUpperInvariant().ToHtml().ToJavaScriptString());
+				s.Write(n.ToUpperInvariant().ToHtml().Escape());
 				s.Write("\",a:\"c_");
-				s.Write(n.ToHtmlId().ToJavaScriptString());
+				s.Write(n.ToHtmlId().Escape());
 				s.Write("\",l:[");
 				s.Write(x.Value.Coords[""][0][0].ToString(CultureInfo.InvariantCulture));
 				s.Write(",");
@@ -828,11 +828,11 @@ namespace nlconv
 				var n = x.Value.Name;
 				var wb = n.WithoutBars().ToLowerInvariant();
 				s.Write("\"");
-				s.Write(n.ToJavaScriptString());
+				s.Write(n.Escape());
 				s.Write("\":{h:\"");
-				s.Write(n.ToUpperInvariant().ToHtml().ToJavaScriptString());
+				s.Write(n.ToUpperInvariant().ToHtml().Escape());
 				s.Write("\",a:\"w_");
-				s.Write(n.ToHtmlId().ToJavaScriptString());
+				s.Write(n.ToHtmlId().Escape());
 				s.Write("\",l:[");
 				foreach (var y in x.Value.Coords)
 				{
@@ -860,7 +860,7 @@ namespace nlconv
 				foreach (var y in x.Value)
 				{
 					s.Write("\"");
-					s.Write(y.ToJavaScriptString());
+					s.Write(y.Escape());
 					s.Write("\",");
 				}
 				s.WriteLine("],");
@@ -876,7 +876,7 @@ namespace nlconv
 				foreach (var y in x.Value)
 				{
 					s.Write("\"");
-					s.Write(y.ToJavaScriptString());
+					s.Write(y.Escape());
 					s.Write("\",");
 				}
 				s.WriteLine("],");

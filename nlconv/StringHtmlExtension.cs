@@ -60,20 +60,5 @@ namespace nlconv
 			}
 			return sb.ToString();
 		}
-
-		public static string ToJavaScriptString(this string n)
-		{
-			StringBuilder sb = new StringBuilder();
-			foreach (char c in n)
-			{
-				switch (c)
-				{
-					case '"':  sb.Append("\\\""); break;
-					case '\\': sb.Append("\\\\"); break;
-					default:   sb.Append(c);      break;
-				}
-			}
-			return sb.ToString();
-		}
 	}
 }

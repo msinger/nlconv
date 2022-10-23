@@ -88,7 +88,7 @@ namespace nlconv
 					if (c == null)
 						continue;
 					s.Write("\"");
-					s.Write(c.Name.ToJavaScriptString());
+					s.Write(c.Name.Escape());
 					s.Write("\",");
 				}
 				s.Write("],w:[");
@@ -98,7 +98,7 @@ namespace nlconv
 					if (w == null)
 						continue;
 					s.Write("\"");
-					s.Write(w.Name.ToJavaScriptString());
+					s.Write(w.Name.Escape());
 					s.Write("\",");
 				}
 				s.Write("]");
