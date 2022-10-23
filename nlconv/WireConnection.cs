@@ -80,7 +80,7 @@ namespace nlconv
 			sb.Append(Cell.ToHtmlName());
 			sb.Append("</a>.<span class=\"" + netlist.Types[netlist.Cells[Cell].Type].Ports[Port].CssClass + "\">");
 			if (portLink)
-				sb.Append("<a href=\"" + netlist.MapUrl + "?view=" + CoordString(netlist.Cells[Cell].Coords[""][0]) + "&" + PortCoordString(netlist.Cells[Cell].Coords[Port]) + "\">");
+				sb.Append("<a href=\"" + netlist.MapUrl + "&view=" + netlist.Cells[Cell].Name.ToUrl() + "&" + PortCoordString(netlist.Cells[Cell].Coords[Port]) + "\">");
 			sb.Append(Port.ToHtmlName());
 			if (portLink)
 				sb.Append("</a>");

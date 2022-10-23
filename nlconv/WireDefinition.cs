@@ -108,7 +108,7 @@ namespace nlconv
 			s.Write("<dt>Name</dt><dd>" + Name.ToHtmlName() + "</dd>");
 			s.Write("<dt>Class</dt><dd>" + ClassString + "</dd>");
 			if (Coords.Count != 0 && !string.IsNullOrEmpty(netlist.MapUrl))
-				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=line[]&" + LineCoordString(Coords) + "\">Highlight on map</a></dd>");
+				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=w:" + Name.ToUrl() + "\">Highlight on map</a></dd>");
 			else
 				s.Write("<dt>Location</dt><dd>-</dd>");
 			s.Write("<dt>Driven by</dt><dd>");

@@ -131,7 +131,7 @@ namespace nlconv
 				bool portLink = Coords.ContainsKey("") && Coords.ContainsKey(p.Name);
 				s.Write("<span class=\"" + p.CssClass + "\">");
 				if (portLink)
-					s.Write("<a href=\"" + netlist.MapUrl + "&view=" + CoordString(Coords[""][0]) + "&" + PortCoordString(Coords[p.Name]) + "\">");
+					s.Write("<a href=\"" + netlist.MapUrl + "&view=c:" + Name.ToUrl() + "&" + PortCoordString(Coords[p.Name]) + "\">");
 				s.Write(p.Name.ToHtmlName());
 				if (portLink)
 					s.Write("</a>");
@@ -193,7 +193,7 @@ namespace nlconv
 			s.Write("<dt>Type</dt><dd><a href=\"#t_" + Type.ToHtmlId() + "\">" + Type.ToHtmlName() + "</a></dd>");
 			s.Write("<dt>Orientation</dt><dd>" + OrientationString + "</dd>");
 			if (Coords.ContainsKey("") && !string.IsNullOrEmpty(netlist.MapUrl))
-				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=" + CoordString(Coords[""][0]) + "&" + BoxCoordString(Coords[""][0]) + "\">Highlight on map</a></dd>");
+				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=c:" + Name.ToUrl() + "\">Highlight on map</a></dd>");
 			else
 				s.Write("<dt>Location</dt><dd>-</dd>");
 			s.Write("<dt>Driven by</dt><dd>");
