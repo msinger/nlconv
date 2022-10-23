@@ -91,6 +91,7 @@ namespace nlconv
 						switch (c)
 						{
 							case 'n': sb.Append('\n'); break;
+							case 't': sb.Append('\t'); break;
 							default:  sb.Append(c);    break;
 						}
 						escaped = false;
