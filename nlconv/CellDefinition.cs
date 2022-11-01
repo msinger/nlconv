@@ -410,9 +410,9 @@ namespace nlconv
 			float fsize = 15.0f;
 			float min = MathF.Min(box.Width, box.Height);
 			float max = MathF.Max(box.Width, box.Height);
-			if (min > 300.0f)  fsize = 50.0f;
-			if (min > 600.0f)  fsize = 100.0f;
-			if (min > 1500.0f) fsize = 300.0f;
+			if (min > 250.0f)  fsize = 70.0f;
+			if (min > 480.0f)  fsize = 150.0f;
+			if (min > 2400.0f) fsize = 380.0f;
 
 			Font font = new Font(FontFamily.GenericMonospace, fsize);
 
