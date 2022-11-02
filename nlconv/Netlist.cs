@@ -567,6 +567,60 @@ namespace nlconv
 			}
 		}
 
+		// Check if all connections in the sources list are outputs that belong to inverters (cells with exactly
+		// one input and exactly one output), which have their inputs driven by the same wire.
+		protected bool AreAllParallelInverters(List<WireConnection> sources)
+		{
+			if (sources.Count < 2)
+				return false;
+
+			CellDefinition c0  = Cells[sources[0].Cell];
+			TypeDefinition t0  = Types[c0.Type];
+			PortDefinition p0o = t0.Ports[sources[0].Port];
+			PortDefinition p0i = null;
+
+			if (t0.Ports.Count != 2 || p0o.Direction != PortDirection.Output)
+				return false;
+			foreach (PortDefinition p_other in t0.Ports.Values)
+			{
+				if (p_other == p0o)
+					continue;
+				if (p_other.Direction != PortDirection.Input)
+					return false;
+				p0i = p_other;
+			}
+
+			WireDefinition w0;
+			Cons.TryGetValue(new WireConnection(c0.Name, p0i.Name), out w0);
+
+			foreach (WireConnection con in sources)
+			{
+				CellDefinition c  = Cells[con.Cell];
+				TypeDefinition t  = Types[c.Type];
+				PortDefinition po = t.Ports[con.Port];
+				PortDefinition pi = null;
+
+				if (t.Ports.Count != 2 || po.Direction != PortDirection.Output)
+					return false;
+				foreach (PortDefinition p_other in t.Ports.Values)
+				{
+					if (p_other == po)
+						continue;
+					if (p_other.Direction != PortDirection.Input)
+						return false;
+					pi = p_other;
+				}
+
+				WireDefinition w;
+				Cons.TryGetValue(new WireConnection(c.Name, pi.Name), out w);
+
+				if (w0 != w)
+					return false;
+			}
+
+			return true;
+		}
+
 		protected void CheckWire(WireDefinition wire)
 		{
 			List<WireConnection> both = new List<WireConnection>();
@@ -606,8 +660,8 @@ namespace nlconv
 				if (p.Direction != PortDirection.Output && p.Direction != PortDirection.Tristate && p.Direction != PortDirection.Bidir && p.Direction != PortDirection.OutputLow && p.Direction != PortDirection.OutputHigh)
 					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is not an output or tri-state.");
 
-				if (p.Direction == PortDirection.Output && wire.Sources.Count != 1)
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is an output (not tri-state), but there are multiple entries in source list.");
+				if (p.Direction == PortDirection.Output && wire.Sources.Count != 1 && !AreAllParallelInverters(wire.Sources))
+					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is an output (not tri-state), but there are multiple entries in source list, which do not come from parallel inverters.");
 
 				drvTri  |= p.Direction == PortDirection.Tristate || p.Direction == PortDirection.Bidir ? 1 : 0;
 				drvOut0 |= p.Direction == PortDirection.OutputLow  ? 1 : 0;
