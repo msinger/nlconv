@@ -865,6 +865,11 @@ namespace nlconv
 				foreach (var y in x.Value.Alias)
 				{
 					wb = y.WithoutBars().ToLowerInvariant();
+					s.Write("\"");
+					s.Write(y.Escape());
+					s.Write("\":{p:\"");
+					s.Write(n.Escape());
+					s.WriteLine("\"},");
 					if (!c.ContainsKey(wb))
 						c[wb] = new List<string>();
 					c[wb].Add(n);
