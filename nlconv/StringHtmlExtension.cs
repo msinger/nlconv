@@ -50,9 +50,7 @@ namespace nlconv
 				return true;
 			if (c >= '0' && c <= '9')
 				return true;
-			return c == '_' || c == '-' || c == '.' || c == ',' || c == ':' || c == ';' || c == '~' ||
-			       c == '{' || c == '}' || c == '[' || c == ']' || c == '(' || c == ')' ||
-			       c == '+' || c == '*';
+			return c == '_' || c == '-' || c == '.' || c == '~';
 		}
 
 		public static string ToHtmlId(this string n)
@@ -86,7 +84,7 @@ namespace nlconv
 				else
 				{
 					sb.Append('%');
-					sb.Append(((int)c).ToString("X2"));
+					sb.Append(((int)c).ToString("x2"));
 				}
 			}
 			return sb.ToString();
