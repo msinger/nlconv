@@ -39,8 +39,8 @@ namespace nlconv
 			}
 
 			Netlist nl = new Netlist();
-			nl.DefaultDocUrl = "http://iceboy.a-singer.de/doc/dmg_cells.html#%t";
-			nl.MapUrl        = "http://iceboy.a-singer.de/dmg_cpu_b_map/?wires=0&cells=0";
+			nl.DefaultDocUrl = "/doc/dmg_cells.html#%t";
+			nl.MapUrl        = "/dmg_cpu_b_map/?wires=0";
 
 			string l;
 			while ((l = Console.ReadLine()) != null)

@@ -74,15 +74,24 @@ namespace nlconv
 
 		public virtual string ToHtml(Netlist netlist)
 		{
-			bool portLink = netlist.Cells[Cell].Coords.ContainsKey("") && netlist.Cells[Cell].Coords.ContainsKey(Port);
+			CellDefinition cell = netlist.Cells[Cell];
+			Func<float, float, (float, float)> identity  = (x, y) => (x, y);
+			Func<float, float, (float, float)> transform = cell.GetTransformation(netlist);
+			var fix = identity;
+			var c = (cell.CanDraw && cell.Coords.ContainsKey(Port)) ? cell.Coords[Port] : null;
+			if (cell.CanDraw && c == null && netlist.Types[cell.Type].Center.HasValue)
+			{
+				netlist.Types[cell.Type].Coords.TryGetValue(Port, out c);
+				fix = transform;
+			}
 			StringBuilder sb = new StringBuilder();
 			sb.Append("<a href=\"#c_" + Cell.ToHtmlId() + "\">");
 			sb.Append(Cell.ToHtmlName());
-			sb.Append("</a>.<span class=\"" + netlist.Types[netlist.Cells[Cell].Type].Ports[Port].CssClass + "\">");
-			if (portLink)
-				sb.Append("<a href=\"" + netlist.MapUrl + "&view=" + netlist.Cells[Cell].Name.ToUrl() + "&" + PortCoordString(netlist.Cells[Cell].Coords[Port]) + "\">");
+			sb.Append("</a>.<span class=\"" + netlist.Types[cell.Type].Ports[Port].CssClass + "\">");
+			if (c != null)
+				sb.Append("<a href=\"" + netlist.MapUrl + "&view=c:" + cell.Name.ToUrl() + "&" + PortCoordString(c, fix) + "\">");
 			sb.Append(Port.ToHtmlName());
-			if (portLink)
+			if (c != null)
 				sb.Append("</a>");
 			sb.Append("</span>");
 			return sb.ToString();
