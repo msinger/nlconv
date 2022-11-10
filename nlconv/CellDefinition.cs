@@ -331,8 +331,8 @@ namespace nlconv
 
 		protected static void DrawCross(Graphics g, Pen pen, float x, float y, float sx, float sy)
 		{
-			g.DrawLine(pen, x * sx - 10.0f, y * sy - 10.0f, x * sx + 10.0f, y * sy + 10.0f);
-			g.DrawLine(pen, x * sx - 10.0f, y * sy + 10.0f, x * sx + 10.0f, y * sy - 10.0f);
+			g.DrawLine(pen, x * sx - 5.0f, y * sy - 5.0f, x * sx + 5.0f, y * sy + 5.0f);
+			g.DrawLine(pen, x * sx - 5.0f, y * sy + 5.0f, x * sx + 5.0f, y * sy - 5.0f);
 		}
 
 		public virtual void Draw(Netlist netlist, Graphics g, float sx, float sy)
