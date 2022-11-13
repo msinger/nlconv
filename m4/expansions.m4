@@ -63,11 +63,14 @@ fi
 AC_SUBST(CSC_IMPLICIT_REFS_ARG, \$\{CSC_NO_IMPLICIT_REFS\})dnl
 
 # -langversion option
-AC_MSG_CHECKING([whether $CSC accepts -langversion:7])
-$CSC -target:exe -out:test_out.exe -langversion:7 test_in.cs >/dev/null 2>&1
+AC_MSG_CHECKING([whether $CSC accepts -langversion:8])
+cat >test_in.cs <<EOF
+public static class Program { public static void Main() { using var r = new System.BinaryReader(System.Console.In); } }
+EOF
+$CSC -target:exe -out:test_out.exe -langversion:8 test_in.cs >/dev/null 2>&1
 if test "x${?}" = "x0"; then
 	AC_MSG_RESULT(yes)
-	AC_SUBST(CSC_LANG_ARG, -langversion:7)dnl
+	AC_SUBST(CSC_LANG_ARG, -langversion:8)dnl
 else
 	$CSC -target:exe -out:test_out.exe -langversion:Default test_in.cs >/dev/null 2>&1
 	if test "x${?}" = "x0"; then
@@ -81,6 +84,9 @@ fi
 
 # -codepage option
 AC_MSG_CHECKING([whether $CSC accepts -codepage:utf8])
+cat >test_in.cs <<EOF
+public static class Program { public static void Main() { } }
+EOF
 $CSC -target:exe -out:test_out.exe -codepage:utf8 test_in.cs >/dev/null 2>&1
 if test "x${?}" = "x0"; then
 	AC_MSG_RESULT(yes)

@@ -84,8 +84,9 @@ TYPE <type-name>[:<color>] <port-name>[:<port-dir>]
   <dd>
     Color that will be used when drawing cell instances of this type.
     Can be one of: <code>BLACK</code>, <code>BLUE</code>, <code>CYAN</code>, <code>GREEN</code>, <code>LIME</code>,
-    <code>MAGENTA</code>, <code>ORANGE</code>, <code>PURPLE</code>, <code>RED</code>, <code>TURQUOISE</code> or
-    <code>YELLOW</code>. Defaults to <code>BLACK</code> if not given.
+    <code>MAGENTA</code>, <code>ORANGE</code>, <code>PURPLE</code>, <code>RED</code>, <code>TEAL</code>,
+    <code>YELLOW</code>, <code>PINK</code>, <code>NAVY</code>, <code>BROWN</code>, <code>GRAY</code> or
+    <code>WHITE</code>. Defaults to <code>BLACK</code> if not given.
   </dd>
 
   <dt>&lt;port-name&gt;</dt>

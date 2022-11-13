@@ -83,9 +83,9 @@ namespace nlconv
 				}
 				if (map.ContainsKey(c))
 					sb.Append(map[c]);
-				else if (char.IsWhiteSpace(c))
+				else if (ws != null && char.IsWhiteSpace(c))
 					sb.Append(ws);
-				else if (!char.IsControl(c))
+				else if (!char.IsControl(c) || (ws == null && char.IsWhiteSpace(c)))
 					sb.Append(c);
 			}
 			if (barMode == 1 || barMode == 5)

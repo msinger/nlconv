@@ -3,6 +3,7 @@ using System.Text;
 using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 
 namespace nlconv
@@ -238,21 +239,7 @@ namespace nlconv
 
 		public Color GetColor(Netlist netlist)
 		{
-			switch (netlist.Types[Type].Color)
-			{
-				case "red":       return Color.Red;
-				case "lime":      return Color.Lime;
-				case "blue":      return Color.Blue;
-				case "yellow":    return Color.Yellow;
-				case "cyan":      return Color.Cyan;
-				case "magenta":   return Color.Magenta;
-				case "orange":    return Color.Orange;
-				case "purple":    return Color.Purple;
-				case "turquoise": return Color.Turquoise;
-				case "green":     return Color.Green;
-				case "black":     return Color.Black;
-			}
-			return Color.Black;
+			return GetColorFromString(netlist.Types[Type].Color);
 		}
 
 		public virtual bool CanDraw
@@ -341,7 +328,7 @@ namespace nlconv
 				return;
 
 			Pen   pen   = new Pen(GetColor(netlist), 3.0f);
-			Brush brush = new SolidBrush(Color.FromArgb(20, IsSpare ? Color.Black : Color.White));
+			Brush brush = new SolidBrush(Color.FromArgb(40, IsSpare ? Color.Black : Color.White));
 
 			var box = GetBoundingBox(sx, sy).Value;
 
@@ -414,37 +401,38 @@ namespace nlconv
 			if (min > 480.0f)  fsize = 150.0f;
 			if (min > 2400.0f) fsize = 380.0f;
 
-			Font font = new Font(FontFamily.GenericMonospace, fsize);
+			using Font font = new Font(FontFamily.GenericMonospace, fsize);
 
-			Bitmap bmp = new Bitmap((int)max, (int)max, PixelFormat.Format32bppArgb);
-			using (Graphics gt = Graphics.FromImage(bmp))
+			using Bitmap bmp = new Bitmap((int)max, (int)max, PixelFormat.Format32bppArgb);
+			using Graphics gt = Graphics.FromImage(bmp);
+
+			gt.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+			gt.TranslateTransform(max / 2.0f, max / 2.0f);
+
+			var tbox = new RectangleF(-(max / 2.0f), -(max / 2.0f), max, max);
+
+			using var format = new StringFormat(StringFormatFlags.NoClip |
+			                                    StringFormatFlags.NoWrap);
+			format.Alignment     = StringAlignment.Center;
+			format.LineAlignment = StringAlignment.Center;
+
+			switch (Orientation.Value)
 			{
-				gt.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-				gt.TranslateTransform(max / 2.0f, max / 2.0f);
-
-				var tbox = new RectangleF(-(max / 2.0f), -(max / 2.0f), max, max);
-
-				var format = new StringFormat(StringFormatFlags.NoClip |
-				                              StringFormatFlags.NoWrap);
-				format.Alignment     = StringAlignment.Center;
-				format.LineAlignment = StringAlignment.Center;
-
-				switch (Orientation.Value)
-				{
-					case CellOrientation.Rot0:
-					case CellOrientation.Rot180:
-						gt.RotateTransform(90.0f);
-						break;
-					case CellOrientation.Rot90:
-						gt.RotateTransform(180.0f);
-						break;
-				}
-
-				gt.DrawString(Name.ToUpperInvariant().Unbar(), font, Brushes.Black, tbox, format);
+				case CellOrientation.Rot0:
+				case CellOrientation.Rot180:
+					gt.RotateTransform(90.0f);
+					break;
+				case CellOrientation.Rot90:
+					gt.RotateTransform(180.0f);
+					break;
 			}
 
+			gt.DrawString(Name.ToUpperInvariant().Unbar(), font, Brushes.Black, tbox, format);
+			gt.Flush(FlushIntention.Flush);
+
 			g.DrawImage(bmp, box.X - max / 2.0f + box.Width / 2.0f, box.Y - max / 2.0f + box.Height / 2.0f);
+			g.Flush(FlushIntention.Flush);
 		}
 
 		public virtual bool Intersects(Box b)

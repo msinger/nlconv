@@ -13,16 +13,18 @@ namespace nlconv
 		public readonly SortedDictionary<string, CellDefinition>   Cells;
 		public readonly SortedDictionary<string, WireDefinition>   Wires;
 		public readonly Dictionary<WireConnection, WireDefinition> Cons;
+		public readonly List<LabelDefinition>                      Labels;
 
 		public string DefaultDocUrl = "";
 		public string MapUrl        = "";
 
 		public Netlist() : base()
 		{
-			Types = new SortedDictionary<string, TypeDefinition>();
-			Cells = new SortedDictionary<string, CellDefinition>();
-			Wires = new SortedDictionary<string, WireDefinition>();
-			Cons  = new Dictionary<WireConnection, WireDefinition>();
+			Types  = new SortedDictionary<string, TypeDefinition>();
+			Cells  = new SortedDictionary<string, CellDefinition>();
+			Wires  = new SortedDictionary<string, WireDefinition>();
+			Cons   = new Dictionary<WireConnection, WireDefinition>();
+			Labels = new List<LabelDefinition>();
 		}
 
 		protected static void ParseEOT(LinkedListNode<LexerToken> n)
@@ -107,7 +109,7 @@ namespace nlconv
 			}
 
 			var ports   = ParsePortDefinitionList(ref n);
-			var coords  = ParseCoordList(ref n);
+			var coords  = ParseCoordList(ref n, true);
 			string desc = "";
 			string doc  = DefaultDocUrl;
 
@@ -154,14 +156,19 @@ namespace nlconv
 			case "red":
 			case "lime":
 			case "blue":
+			case "pink":
+			case "navy":
 			case "yellow":
 			case "cyan":
 			case "magenta":
 			case "orange":
 			case "purple":
-			case "turquoise":
+			case "teal":
 			case "green":
+			case "brown":
+			case "gray":
 			case "black":
+			case "white":
 				return color;
 			default:
 				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Invalid color.");
@@ -239,10 +246,15 @@ namespace nlconv
 
 		protected static KeyValuePair<string, List<float>> ParseCoord(ref LinkedListNode<LexerToken> n)
 		{
+			return ParseCoord(ref n, false);
+		}
+
+		protected static KeyValuePair<string, List<float>> ParseCoord(ref LinkedListNode<LexerToken> n, bool named)
+		{
 			LinkedListNode<LexerToken> me = n;
 
 			string name = "";
-			if (n.Value.Type == LexerTokenType.Name)
+			if (named && n.Value.Type == LexerTokenType.Name)
 			{
 				name = n.Value.String.CanonicalizeBars();
 				n = n.Next;
@@ -257,11 +269,16 @@ namespace nlconv
 
 		protected static IList<KeyValuePair<string, List<float>>> ParseCoordList(ref LinkedListNode<LexerToken> n)
 		{
+			return ParseCoordList(ref n, false);
+		}
+
+		protected static IList<KeyValuePair<string, List<float>>> ParseCoordList(ref LinkedListNode<LexerToken> n, bool named)
+		{
 			List<KeyValuePair<string, List<float>>> l = new List<KeyValuePair<string, List<float>>>();
-			if (n.Value.Type != LexerTokenType.At && !(n.Value.Type == LexerTokenType.Name && n.Next.Value.Type == LexerTokenType.At))
+			if (n.Value.Type != LexerTokenType.At && !(named && n.Value.Type == LexerTokenType.Name && n.Next.Value.Type == LexerTokenType.At))
 				return l;
-			l.Add(ParseCoord(ref n));
-			l.AddRange(ParseCoordList(ref n));
+			l.Add(ParseCoord(ref n, named));
+			l.AddRange(ParseCoordList(ref n, named));
 			return l;
 		}
 
@@ -290,7 +307,7 @@ namespace nlconv
 			bool? f;
 			ParseCellOrientation(ref n, out o, out f);
 
-			var coords = ParseCoordList(ref n);
+			var coords = ParseCoordList(ref n, true);
 
 			bool   sp   = false;
 			bool   vr   = false;
@@ -483,6 +500,97 @@ namespace nlconv
 			return a;
 		}
 
+		protected static void ParseAlignment(ref LinkedListNode<LexerToken> n, out Alignment? a)
+		{
+			a = null;
+
+			if (n.Value.Type != LexerTokenType.Name)
+				return;
+
+			switch (n.Value.String.ToLowerInvariant())
+			{
+			case "center":
+				a = Alignment.Center;
+				break;
+			case "top-left":
+				a = Alignment.TopLeft;
+				break;
+			case "top-center":
+				a = Alignment.TopCenter;
+				break;
+			case "top-right":
+				a = Alignment.TopRight;
+				break;
+			case "center-left":
+				a = Alignment.CenterLeft;
+				break;
+			case "center-right":
+				a = Alignment.CenterRight;
+				break;
+			case "bottom-left":
+				a = Alignment.BottomLeft;
+				break;
+			case "bottom-center":
+				a = Alignment.BottomCenter;
+				break;
+			case "bottom-right":
+				a = Alignment.BottomRight;
+				break;
+			default:
+				return;
+			}
+			n = n.Next;
+		}
+
+		protected static LabelDefinition ParseLabelDefinition(LinkedListNode<LexerToken> n)
+		{
+			LinkedListNode<LexerToken> me = n;
+
+			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "label")
+				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Label definition expected.");
+			n = n.Next;
+
+			string text = "";
+			while (n.Value.Type == LexerTokenType.String)
+			{
+				text += n.Value.String;
+				n = n.Next;
+			}
+
+			string color = "black";
+			if (n.Value.Type == LexerTokenType.Colon)
+			{
+				n = n.Next;
+				color = ParseColor(n);
+				n = n.Next;
+			}
+
+			var n_sz = n;
+			float size = ParseFloat(ref n);
+			if (size < 0.0f)
+				throw new NetlistFormatException(n_sz.Value.Pos, n_sz.Value.Line, n_sz.Value.Col, "Size must be positive.");
+
+			CellOrientation? o;
+			bool? f;
+			ParseCellOrientation(ref n, out o, out f);
+			if (!o.HasValue) o = CellOrientation.Rot0;
+			if (!f.HasValue) f = false;
+
+			var n_c = n;
+			var coords = ParseCoord(ref n);
+			if (coords.Value.Count != 2)
+				throw new NetlistFormatException(n_c.Value.Pos, n_c.Value.Line, n_c.Value.Col, "Coordinates must be one point (X,Y).");
+
+			Alignment? a;
+			ParseAlignment(ref n, out a);
+			if (!a.HasValue) a = Alignment.Center;
+
+			LabelDefinition l = new LabelDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, text, color, size, o.Value, f.Value, new Vector(coords.Value[0], coords.Value[1]), a.Value);
+
+			ParseEOT(n);
+			return l;
+		}
+
 		protected IList<ParserToken> Parse(LinkedListNode<LexerToken> n)
 		{
 			switch (n.Value.Type)
@@ -501,6 +609,8 @@ namespace nlconv
 					return new ParserToken[] { ParseWireDefinition(n) };
 				case "alias":
 					return new ParserToken[] { ParseAliasDefinition(n) };
+				case "label":
+					return new ParserToken[] { ParseLabelDefinition(n) };
 				default:
 					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Invalid statement.");
 				}
@@ -739,6 +849,10 @@ namespace nlconv
 							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "No matching cell definition found prior to this alias definition.");
 						Cells[ad.Name].Alias.AddRange(ad.Alias);
 					}
+					else if (t is LabelDefinition)
+					{
+						Labels.Add((LabelDefinition)t);
+					}
 					else
 					{
 						throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Unknown parser token.");
@@ -792,6 +906,8 @@ namespace nlconv
 				sb.AppendLine(x.Value.ToString());
 			foreach (var x in Wires)
 				sb.AppendLine(x.Value.ToString());
+			foreach (var x in Labels)
+				sb.AppendLine(x.ToString());
 			return sb.ToString();
 		}
 
@@ -829,6 +945,8 @@ namespace nlconv
 		{
 			foreach (var x in Cells)
 				x.Value.DrawLabels(g, sx, sy);
+			foreach (var x in Labels)
+				x.Draw(g, sx, sy);
 		}
 
 		public virtual void ToJavaScript(TextWriter s)

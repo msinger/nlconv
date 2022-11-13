@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Drawing;
 
 namespace nlconv
 {
@@ -119,6 +120,30 @@ namespace nlconv
 		protected static string PortCoordString(List<List<float>> l, Func<float, float, (float, float)> fix)
 		{
 			return PortCoordString(l, 0, 0, fix);
+		}
+
+		public static Color GetColorFromString(string s)
+		{
+			switch (s)
+			{
+				case "red":       return Color.Red;
+				case "lime":      return Color.Lime;
+				case "blue":      return Color.Blue;
+				case "pink":      return Color.Pink;
+				case "navy":      return Color.Navy;
+				case "yellow":    return Color.Yellow;
+				case "cyan":      return Color.Cyan;
+				case "magenta":   return Color.Magenta;
+				case "orange":    return Color.Orange;
+				case "purple":    return Color.Purple;
+				case "teal":      return Color.Teal;
+				case "green":     return Color.Green;
+				case "brown":     return Color.Brown;
+				case "gray":      return Color.Gray;
+				case "black":     return Color.Black;
+				case "white":     return Color.White;
+			}
+			return Color.Black;
 		}
 	}
 }

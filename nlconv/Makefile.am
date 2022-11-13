@@ -8,11 +8,13 @@ all: $(ASSEMBLY) $(LINUX_PKGCONFIG) $(ASSEMBLY_WRAPPER)
 
 FILES = \
 	AliasDefinition.cs \
+	Alignment.cs \
 	BarProcessor.cs \
 	Box.cs \
 	CellDefinition.cs \
 	CellOrientation.cs \
 	IIntersectable.cs \
+	LabelDefinition.cs \
 	Line.cs \
 	Netlist.cs \
 	NetlistFormatException.cs \

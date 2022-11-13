@@ -153,7 +153,7 @@ namespace nlconv
 					case WireClass.Clock:   return "bg_magenta";
 					case WireClass.Data:    return "bg_blue";
 					case WireClass.Address: return "bg_yellow";
-					case WireClass.Reset:   return "bg_turquoise";
+					case WireClass.Reset:   return "bg_teal";
 					case WireClass.Analog:  return "bg_lime";
 				}
 				return "bg_blue";
@@ -173,7 +173,7 @@ namespace nlconv
 					case WireClass.Clock:   return Color.Magenta;
 					case WireClass.Data:    return Color.Blue;
 					case WireClass.Address: return Color.Yellow;
-					case WireClass.Reset:   return Color.Turquoise;
+					case WireClass.Reset:   return Color.Teal;
 					case WireClass.Analog:  return Color.Green;
 				}
 				return Color.Blue;

@@ -14,7 +14,12 @@ namespace nlconv
 
 		public static string Unbar(this string n)
 		{
-			return BarProcessor.ProcessBars(n, "/", "", " ", empty);
+			return Unbar(n, false);
+		}
+
+		public static string Unbar(this string n, bool keepWs)
+		{
+			return BarProcessor.ProcessBars(n, "/", "", keepWs ? null : " ", empty);
 		}
 
 		public static string WithoutBars(this string n)

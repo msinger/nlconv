@@ -94,13 +94,17 @@ namespace nlconv
 				".bg_red { background-color: rgba(255, 0, 0, 0.3); }" +
 				".bg_lime { background-color: rgba(0, 255, 0, 0.3); }" +
 				".bg_blue { background-color: rgba(0, 0, 255, 0.3); }" +
+				".bg_pink { background-color: rgba(255, 192, 203, 0.3); }" +
+				".bg_navy { background-color: rgba(0, 0, 128, 0.3); }" +
 				".bg_yellow { background-color: rgba(255, 255, 0, 0.3); }" +
 				".bg_cyan { background-color: rgba(0, 255, 255, 0.3); }" +
 				".bg_magenta { background-color: rgba(255, 0, 255, 0.3); }" +
-				".bg_orange { background-color: rgba(255, 127, 0, 0.3); }" +
-				".bg_purple { background-color: rgba(127, 0, 127, 0.3); }" +
-				".bg_turquoise { background-color: rgba(0, 127, 127, 0.3); }" +
-				".bg_green { background-color: rgba(0, 127, 0, 0.3); }" +
+				".bg_orange { background-color: rgba(255, 165, 0, 0.3); }" +
+				".bg_purple { background-color: rgba(128, 0, 128, 0.3); }" +
+				".bg_teal { background-color: rgba(0, 128, 128, 0.3); }" +
+				".bg_green { background-color: rgba(0, 128, 0, 0.3); }" +
+				".bg_brown { background-color: rgba(165, 42, 42, 0.3); }" +
+				".bg_gray { background-color: rgba(128, 128, 128, 0.3); }" +
 				".bg_black { background-color: rgba(0, 0, 0, 0.3); }" +
 				".bg_white { background-color: rgba(255, 255, 255, 0.3); }" +
 				"</style>";
