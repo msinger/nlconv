@@ -18,6 +18,7 @@ namespace nlconv
 		public readonly string           Description;
 		public readonly Dictionary<string, List<List<float>>> Coords;
 		public readonly List<string>     Alias;
+		public readonly string           Category;
 
 		public CellDefinition(int pos, int line, int col,
 		                      string           name,
@@ -28,7 +29,8 @@ namespace nlconv
 		                      bool             virt,
 		                      bool             comp,
 		                      bool             trivial,
-		                      string           desc)
+		                      string           desc,
+		                      string           category)
 			: base(pos, line, col)
 		{
 			Name        = name;
@@ -42,6 +44,7 @@ namespace nlconv
 			Description = desc;
 			Coords      = new Dictionary<string, List<List<float>>>();
 			Alias       = new List<string>();
+			Category    = category;
 		}
 
 		public void AddCoords(string name, List<float> coords)
@@ -96,6 +99,11 @@ namespace nlconv
 			if (IsVirtual) sb.Append(" virtual");
 			if (IsComp)    sb.Append(" comp");
 			if (IsTrivial) sb.Append(" trivial");
+			if (!string.IsNullOrEmpty(Category))
+			{
+				sb.Append(" ->");
+				sb.Append(Category);
+			}
 			if (!string.IsNullOrEmpty(Description))
 			{
 				sb.Append(" \"");
@@ -192,6 +200,10 @@ namespace nlconv
 			s.Write("<dl>");
 			s.Write("<dt>Name</dt><dd>" + Name.ToHtmlName() + "</dd>");
 			s.Write("<dt>Type</dt><dd><a href=\"#t_" + Type.ToHtmlId() + "\">" + Type.ToHtmlName() + "</a></dd>");
+			if (!string.IsNullOrEmpty(Category))
+				s.Write("<dt>Category</dt><dd>" + Category.ToHtmlName() + "</dd>");
+			else
+				s.Write("<dt>Category</dt><dd>-</dd>");
 			s.Write("<dt>Orientation</dt><dd>" + OrientationString + "</dd>");
 			if (Coords.ContainsKey("") && !string.IsNullOrEmpty(netlist.MapUrl))
 				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=c:" + Name.ToUrl() + "\">Highlight on map</a></dd>");

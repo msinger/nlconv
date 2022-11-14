@@ -9,22 +9,24 @@ namespace nlconv
 {
 	public partial class Netlist : NetlistLexerBase
 	{
-		public readonly SortedDictionary<string, TypeDefinition>   Types;
-		public readonly SortedDictionary<string, CellDefinition>   Cells;
-		public readonly SortedDictionary<string, WireDefinition>   Wires;
-		public readonly Dictionary<WireConnection, WireDefinition> Cons;
-		public readonly List<LabelDefinition>                      Labels;
+		public readonly SortedDictionary<string, TypeDefinition>     Types;
+		public readonly SortedDictionary<string, CellDefinition>     Cells;
+		public readonly SortedDictionary<string, WireDefinition>     Wires;
+		public readonly Dictionary<WireConnection, WireDefinition>   Cons;
+		public readonly List<LabelDefinition>                        Labels;
+		public readonly SortedDictionary<string, CategoryDefinition> Categories;
 
 		public string DefaultDocUrl = "";
 		public string MapUrl        = "";
 
 		public Netlist() : base()
 		{
-			Types  = new SortedDictionary<string, TypeDefinition>();
-			Cells  = new SortedDictionary<string, CellDefinition>();
-			Wires  = new SortedDictionary<string, WireDefinition>();
-			Cons   = new Dictionary<WireConnection, WireDefinition>();
-			Labels = new List<LabelDefinition>();
+			Types      = new SortedDictionary<string, TypeDefinition>();
+			Cells      = new SortedDictionary<string, CellDefinition>();
+			Wires      = new SortedDictionary<string, WireDefinition>();
+			Cons       = new Dictionary<WireConnection, WireDefinition>();
+			Labels     = new List<LabelDefinition>();
+			Categories = new SortedDictionary<string, CategoryDefinition>();
 		}
 
 		protected static void ParseEOT(LinkedListNode<LexerToken> n)
@@ -314,6 +316,7 @@ namespace nlconv
 			bool   cp   = false;
 			bool   tr   = false;
 			string desc = "";
+			string cat  = "";
 
 			while (n.Value.Type == LexerTokenType.Name)
 			{
@@ -330,13 +333,22 @@ namespace nlconv
 				n = n.Next;
 			}
 
+			if (n.Value.Type == LexerTokenType.To)
+			{
+				n = n.Next;
+				if (n.Value.Type != LexerTokenType.Name)
+					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Category name expected.");
+				cat = n.Value.String;
+				n = n.Next;
+			}
+
 			while (n.Value.Type == LexerTokenType.String)
 			{
 				desc += n.Value.String;
 				n = n.Next;
 			}
 
-			CellDefinition c = new CellDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc);
+			CellDefinition c = new CellDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat);
 
 			foreach (var kvp in coords)
 				c.AddCoords(kvp.Key, kvp.Value);
@@ -591,6 +603,33 @@ namespace nlconv
 			return l;
 		}
 
+		protected static CategoryDefinition ParseCategoryDefinition(LinkedListNode<LexerToken> n)
+		{
+			LinkedListNode<LexerToken> me = n;
+
+			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "category")
+				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Category definition expected.");
+			n = n.Next;
+
+			if (n.Value.Type != LexerTokenType.Name)
+				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Wire name expected.");
+			string name = n.Value.String;
+			n = n.Next;
+
+			string color = "";
+			if (n.Value.Type == LexerTokenType.Colon)
+			{
+				n = n.Next;
+				color = ParseColor(n);
+				n = n.Next;
+			}
+
+			CategoryDefinition c = new CategoryDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color);
+
+			ParseEOT(n);
+			return c;
+		}
+
 		protected IList<ParserToken> Parse(LinkedListNode<LexerToken> n)
 		{
 			switch (n.Value.Type)
@@ -611,6 +650,8 @@ namespace nlconv
 					return new ParserToken[] { ParseAliasDefinition(n) };
 				case "label":
 					return new ParserToken[] { ParseLabelDefinition(n) };
+				case "category":
+					return new ParserToken[] { ParseCategoryDefinition(n) };
 				default:
 					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Invalid statement.");
 				}
@@ -650,6 +691,9 @@ namespace nlconv
 		{
 			if (!Types.ContainsKey(cell.Type))
 				throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Type '" + cell.Type + "' not found.");
+
+			if (!string.IsNullOrEmpty(cell.Category) && !Categories.ContainsKey(cell.Category))
+				throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Category '" + cell.Category + "' not found.");
 
 			TypeDefinition t = Types[cell.Type];
 
@@ -853,6 +897,13 @@ namespace nlconv
 					{
 						Labels.Add((LabelDefinition)t);
 					}
+					else if (t is CategoryDefinition)
+					{
+						CategoryDefinition cd = (CategoryDefinition)t;
+						if (Categories.ContainsKey(cd.Name))
+							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Category name already in use.");
+						Categories.Add(cd.Name, cd);
+					}
 					else
 					{
 						throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Unknown parser token.");
@@ -908,6 +959,8 @@ namespace nlconv
 				sb.AppendLine(x.Value.ToString());
 			foreach (var x in Labels)
 				sb.AppendLine(x.ToString());
+			foreach (var x in Categories)
+				sb.AppendLine(x.Value.ToString());
 			return sb.ToString();
 		}
 

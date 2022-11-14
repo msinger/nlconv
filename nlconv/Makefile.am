@@ -11,6 +11,7 @@ FILES = \
 	Alignment.cs \
 	BarProcessor.cs \
 	Box.cs \
+	CategoryDefinition.cs \
 	CellDefinition.cs \
 	CellOrientation.cs \
 	IIntersectable.cs \

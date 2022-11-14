@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Drawing;
 using System.Drawing.Drawing2D;
