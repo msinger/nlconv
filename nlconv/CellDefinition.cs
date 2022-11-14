@@ -254,9 +254,25 @@ namespace nlconv
 			return GetColorFromString(netlist.Types[Type].Color);
 		}
 
+		public Color? GetFloorColor(Netlist netlist)
+		{
+			if (!CanDrawFloor(netlist))
+				return null;
+
+			return GetColorFromString(netlist.Categories[Category].Color);
+		}
+
 		public virtual bool CanDraw
 		{
 			get { return !IsVirtual && Coords.ContainsKey("") && Orientation != null && IsFlipped != null; }
+		}
+
+		public virtual bool CanDrawFloor(Netlist netlist)
+		{
+			return !IsVirtual &&
+			       Coords.ContainsKey("") &&
+			       !string.IsNullOrEmpty(Category) &&
+			       !string.IsNullOrEmpty(netlist.Categories[Category].Color);
 		}
 
 		public virtual RectangleF? GetBoundingBox(float sx, float sy)
@@ -445,6 +461,16 @@ namespace nlconv
 
 			g.DrawImage(bmp, box.X - max / 2.0f + box.Width / 2.0f, box.Y - max / 2.0f + box.Height / 2.0f);
 			g.Flush(FlushIntention.Flush);
+		}
+
+		public virtual void DrawFloorplan(Netlist netlist, Graphics g, float sx, float sy)
+		{
+			Color? col = GetFloorColor(netlist);
+			if (!col.HasValue)
+				return;
+			Brush brush = new SolidBrush(Color.FromArgb(128, col.Value));
+			var box = GetBoundingBox(sx, sy).Value;
+			g.FillRectangle(brush, box);
 		}
 
 		public virtual bool Intersects(Box b)

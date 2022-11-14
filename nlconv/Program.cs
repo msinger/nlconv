@@ -19,6 +19,7 @@ namespace nlconv
 			case "--png-cells":
 			case "--png-wires":
 			case "--png-labels":
+			case "--png-floor":
 			case "--png":
 			case "--js":
 				break;
@@ -30,6 +31,7 @@ namespace nlconv
 				Console.Error.WriteLine("  --png-cells   Convert netlist from STDIN to PNG containing all cells on STDOUT.");
 				Console.Error.WriteLine("  --png-wires   Convert netlist from STDIN to PNG containing all wires on STDOUT.");
 				Console.Error.WriteLine("  --png-labels  Convert netlist from STDIN to PNG containing all labels on STDOUT.");
+				Console.Error.WriteLine("  --png-floor   Convert netlist from STDIN to PNG containing the floorplan of all cells on STDOUT.");
 				Console.Error.WriteLine("  --png         Convert netlist from STDIN to PNG containing everything on STDOUT.");
 				Console.Error.WriteLine("  --js          Convert netlist from STDIN to Java Script containing all coordinates on STDOUT.");
 				Console.Error.WriteLine();
@@ -60,6 +62,8 @@ namespace nlconv
 				return GenWiresPng(nl);
 			case "--png-labels":
 				return GenLabelsPng(nl);
+			case "--png-floor":
+				return GenFloorplanPng(nl);
 			case "--png":
 				return GenAllPng(nl);
 			case "--js":
@@ -170,9 +174,15 @@ namespace nlconv
 			return GenPng(nl, (g, sx, sy) => { nl.DrawLabels(g, sx, sy); });
 		}
 
+		private static int GenFloorplanPng(Netlist nl)
+		{
+			return GenPng(nl, (g, sx, sy) => { nl.DrawFloorplan(g, sx, sy); });
+		}
+
 		private static int GenAllPng(Netlist nl)
 		{
 			return GenPng(nl, (g, sx, sy) => {
+				nl.DrawFloorplan(g, sx, sy);
 				nl.DrawCells(g, sx, sy);
 				nl.DrawWires(g, sx, sy);
 				nl.DrawLabels(g, sx, sy);

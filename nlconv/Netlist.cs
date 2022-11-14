@@ -1002,6 +1002,12 @@ namespace nlconv
 				x.Draw(g, sx, sy);
 		}
 
+		public virtual void DrawFloorplan(Graphics g, float sx, float sy)
+		{
+			foreach (var x in Cells)
+				x.Value.DrawFloorplan(this, g, sx, sy);
+		}
+
 		public virtual void ToJavaScript(TextWriter s)
 		{
 			var tree = new QuadTree(new Vector(-128.0f, 128.0f), 128.0f, 64, 6);
