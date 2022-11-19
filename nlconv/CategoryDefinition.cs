@@ -7,12 +7,14 @@ namespace nlconv
 	{
 		public readonly string Name;
 		public readonly string Color;
+		public readonly string Description;
 
-		public CategoryDefinition(int pos, int line, int col, string name, string color)
+		public CategoryDefinition(int pos, int line, int col, string name, string color, string desc)
 			: base(pos, line, col)
 		{
-			Name  = name;
-			Color = color;
+			Name        = name;
+			Color       = color;
+			Description = desc;
 		}
 
 		public override string ToString()
@@ -24,6 +26,12 @@ namespace nlconv
 			{
 				sb.Append(":");
 				sb.Append(Color);
+			}
+			if (!string.IsNullOrEmpty(Description))
+			{
+				sb.Append(" \"");
+				sb.Append(Description.Escape());
+				sb.Append("\"");
 			}
 			sb.Append(";");
 			return sb.ToString();

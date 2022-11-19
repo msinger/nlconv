@@ -626,7 +626,14 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			CategoryDefinition c = new CategoryDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color);
+			string desc = "";
+			while (n.Value.Type == LexerTokenType.String)
+			{
+				desc += n.Value.String;
+				n = n.Next;
+			}
+
+			CategoryDefinition c = new CategoryDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color, desc);
 
 			ParseEOT(n);
 			return c;
