@@ -10,6 +10,7 @@ namespace nlconv
 	public partial class Netlist : NetlistLexerBase
 	{
 		public readonly SortedDictionary<string, TypeDefinition>     Types;
+		public readonly SortedDictionary<string, SignalDefinition>   Signals;
 		public readonly SortedDictionary<string, CellDefinition>     Cells;
 		public readonly SortedDictionary<string, WireDefinition>     Wires;
 		public readonly Dictionary<WireConnection, WireDefinition>   Cons;
@@ -22,6 +23,7 @@ namespace nlconv
 		public Netlist() : base()
 		{
 			Types      = new SortedDictionary<string, TypeDefinition>();
+			Signals    = new SortedDictionary<string, SignalDefinition>();
 			Cells      = new SortedDictionary<string, CellDefinition>();
 			Wires      = new SortedDictionary<string, WireDefinition>();
 			Cons       = new Dictionary<WireConnection, WireDefinition>();
@@ -146,6 +148,40 @@ namespace nlconv
 
 			ParseEOT(n);
 			return t;
+		}
+
+		protected static SignalDefinition ParseSignalDefinition(LinkedListNode<LexerToken> n)
+		{
+			LinkedListNode<LexerToken> me = n;
+
+			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "signal")
+				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Signal definition expected.");
+			n = n.Next;
+
+			if (n.Value.Type != LexerTokenType.Name)
+				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Signal name expected.");
+			string name = n.Value.String;
+			n = n.Next;
+
+			string color = "";
+			if (n.Value.Type == LexerTokenType.Colon)
+			{
+				n = n.Next;
+				color = ParseColor(n);
+				n = n.Next;
+			}
+
+			string desc = "";
+			while (n.Value.Type == LexerTokenType.String)
+			{
+				desc += n.Value.String;
+				n = n.Next;
+			}
+
+			SignalDefinition s = new SignalDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color, desc);
+
+			ParseEOT(n);
+			return s;
 		}
 
 		protected static string ParseColor(LinkedListNode<LexerToken> n)
@@ -614,7 +650,7 @@ namespace nlconv
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Wire name expected.");
+				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Category name expected.");
 			string name = n.Value.String;
 			n = n.Next;
 
@@ -651,6 +687,8 @@ namespace nlconv
 				{
 				case "type":
 					return new ParserToken[] { ParseTypeDefinition(n) };
+				case "signal":
+					return new ParserToken[] { ParseSignalDefinition(n) };
 				case "cell":
 					return new ParserToken[] { ParseCellDefinition(n) };
 				case "wire":
@@ -881,6 +919,13 @@ namespace nlconv
 							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Type name already in use.");
 						Types.Add(td.Name, td);
 					}
+					else if (t is SignalDefinition)
+					{
+						SignalDefinition sd = (SignalDefinition)t;
+						if (Signals.ContainsKey(sd.Name))
+							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Signal name already in use.");
+						Signals.Add(sd.Name, sd);
+					}
 					else if (t is CellDefinition)
 					{
 						CellDefinition cd = (CellDefinition)t;
@@ -999,6 +1044,8 @@ namespace nlconv
 		{
 			StringBuilder sb = new StringBuilder();
 			foreach (var x in Types)
+				sb.AppendLine(x.Value.ToString());
+			foreach (var x in Signals)
 				sb.AppendLine(x.Value.ToString());
 			foreach (var x in Cells)
 				sb.AppendLine(x.Value.ToString());
