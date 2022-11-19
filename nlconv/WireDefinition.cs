@@ -13,6 +13,7 @@ namespace nlconv
 		public readonly List<WireConnection> Drains;
 		public readonly string               Description;
 		public readonly List<List<float>>    Coords;
+		public readonly List<string>         Alias;
 
 		public WireDefinition(int pos, int line, int col, string name, WireClass cls, string desc)
 			: base(pos, line, col)
@@ -23,6 +24,7 @@ namespace nlconv
 			Sources     = new List<WireConnection>();
 			Drains      = new List<WireConnection>();
 			Coords      = new List<List<float>>();
+			Alias       = new List<string>();
 		}
 
 		public override string ToString()
@@ -67,6 +69,15 @@ namespace nlconv
 				sb.Append("\"");
 			}
 			sb.Append(";");
+			if (Alias.Count != 0)
+			{
+				sb.Append("\nalias wire");
+				foreach (string alias in new SortedSet<string>(Alias))
+					sb.Append(" " + alias);
+				sb.Append(" -> ");
+				sb.Append(Name);
+				sb.Append(";");
+			}
 			return sb.ToString();
 		}
 
@@ -103,7 +114,15 @@ namespace nlconv
 
 		public virtual void ToHtml(TextWriter s, Netlist netlist)
 		{
-			s.Write("<h2 id=\"w_" + Name.ToHtmlId() + "\">Wire - <span class=\"" + CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span></h2>");
+			s.Write("<h2 id=\"w_" + Name.ToHtmlId() + "\">Wire - <span class=\"" + CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span>");
+			if (Alias.Count != 0)
+			{
+				s.Write(" (alias:");
+				foreach (string alias in new SortedSet<string>(Alias))
+					s.Write(" " + alias.ToUpperInvariant().ToHtmlName());
+				s.Write(")");
+			}
+			s.Write("</h2>");
 			s.Write("<dl>");
 			s.Write("<dt>Name</dt><dd>" + Name.ToHtmlName() + "</dd>");
 			s.Write("<dt>Class</dt><dd>" + ClassString + "</dd>");

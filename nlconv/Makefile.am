@@ -8,6 +8,7 @@ all: $(ASSEMBLY) $(LINUX_PKGCONFIG) $(ASSEMBLY_WRAPPER)
 
 FILES = \
 	AliasDefinition.cs \
+	AliasType.cs \
 	Alignment.cs \
 	BarProcessor.cs \
 	Box.cs \

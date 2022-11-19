@@ -478,8 +478,10 @@ namespace nlconv
 				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Alias definition expected.");
 			n = n.Next;
 
-			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "cell")
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell indicator expected.");
+			if (n.Value.Type != LexerTokenType.Name || (n.Value.String.ToLowerInvariant() != "cell" &&
+			                                            n.Value.String.ToLowerInvariant() != "wire"))
+				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell or wire indicator expected.");
+			AliasType t = n.Value.String.ToLowerInvariant() == "wire" ? AliasType.Wire : AliasType.Cell;
 			n = n.Next;
 
 			List<string> l = new List<string>();
@@ -505,7 +507,7 @@ namespace nlconv
 				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell name expected.");
 			n = n.Next;
 
-			AliasDefinition a = new AliasDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, n.Previous.Value.String.CanonicalizeBars());
+			AliasDefinition a = new AliasDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, n.Previous.Value.String.CanonicalizeBars(), t);
 			a.Alias.AddRange(l);
 
 			ParseEOT(n);
@@ -889,9 +891,21 @@ namespace nlconv
 					else if (t is AliasDefinition)
 					{
 						AliasDefinition ad = (AliasDefinition)t;
-						if (!Cells.ContainsKey(ad.Name))
-							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "No matching cell definition found prior to this alias definition.");
-						Cells[ad.Name].Alias.AddRange(ad.Alias);
+						switch (ad.Type)
+						{
+						case AliasType.Cell:
+							if (!Cells.ContainsKey(ad.Name))
+								throw new NetlistFormatException(t.Pos, t.Line, t.Col, "No matching cell definition found prior to this alias definition.");
+							Cells[ad.Name].Alias.AddRange(ad.Alias);
+							break;
+						case AliasType.Wire:
+							if (!Wires.ContainsKey(ad.Name))
+								throw new NetlistFormatException(t.Pos, t.Line, t.Col, "No matching wire definition found prior to this alias definition.");
+							Wires[ad.Name].Alias.AddRange(ad.Alias);
+							break;
+						default:
+							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Unknown alias definition type.");
+						}
 					}
 					else if (t is LabelDefinition)
 					{
@@ -918,6 +932,32 @@ namespace nlconv
 			{
 				LexerToken t = fifo.First.Value;
 				throw new NetlistFormatException(t.Pos, t.Line, t.Col, "End of file expected.");
+			}
+
+			// Check for duplicate aliases
+			List<string> names = new List<string>();
+			foreach (var cell in Cells.Values)
+				names.Add(cell.Name);
+			foreach (var cell in Cells.Values)
+			{
+				foreach (var aname in cell.Alias)
+				{
+					if (names.Contains(aname))
+						throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Alias " + aname + " of cell " + cell.Name + " is not unique.");
+					names.Add(aname);
+				}
+			}
+			names.Clear();
+			foreach (var wire in Wires.Values)
+				names.Add(wire.Name);
+			foreach (var wire in Wires.Values)
+			{
+				foreach (var aname in wire.Alias)
+				{
+					if (names.Contains(aname))
+						throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Alias " + aname + " of wire " + wire.Name + " is not unique.");
+					names.Add(aname);
+				}
 			}
 
 			foreach (var kvp in Cells)
@@ -1084,6 +1124,18 @@ namespace nlconv
 				if (!w.ContainsKey(wb))
 					w[wb] = new List<string>();
 				w[wb].Add(n);
+				foreach (var y in x.Value.Alias)
+				{
+					wb = y.WithoutBars().ToLowerInvariant();
+					s.Write("\"");
+					s.Write(y.Escape());
+					s.Write("\":{p:\"");
+					s.Write(n.Escape());
+					s.WriteLine("\"},");
+					if (!w.ContainsKey(wb))
+						w[wb] = new List<string>();
+					w[wb].Add(n);
+				}
 			}
 			s.WriteLine("};");
 
