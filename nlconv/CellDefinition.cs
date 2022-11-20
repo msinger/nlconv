@@ -159,7 +159,7 @@ namespace nlconv
 				}
 
 				WireDefinition w = netlist.Cons[wc];
-				s.Write("<span class=\"" + w.CssClass + "\"><a href=\"#w_" + w.Name.ToHtmlId() + "\">" + w.Name.ToHtmlName() + "</a></span>");
+				s.Write("<span class=\"" + w.GetCssClass(netlist) + "\"><a href=\"#w_" + w.Name.ToHtmlId() + "\">" + w.Name.ToHtmlName() + "</a></span>");
 
 				if (output)
 				{

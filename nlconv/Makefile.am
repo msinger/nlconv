@@ -36,7 +36,6 @@ FILES = \
 	StringUnbarExtension.cs \
 	TypeDefinition.cs \
 	Vector.cs \
-	WireClass.cs \
 	WireConnection.cs \
 	WireDefinition.cs
 

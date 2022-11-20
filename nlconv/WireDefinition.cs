@@ -8,18 +8,18 @@ namespace nlconv
 	public class WireDefinition : ParserToken, IIntersectable
 	{
 		public readonly string               Name;
-		public readonly WireClass            Class;
+		public readonly string               Signal;
 		public readonly List<WireConnection> Sources;
 		public readonly List<WireConnection> Drains;
 		public readonly string               Description;
 		public readonly List<List<float>>    Coords;
 		public readonly List<string>         Alias;
 
-		public WireDefinition(int pos, int line, int col, string name, WireClass cls, string desc)
+		public WireDefinition(int pos, int line, int col, string name, string sig, string desc)
 			: base(pos, line, col)
 		{
 			Name        = name;
-			Class       = cls;
+			Signal      = sig;
 			Description = desc;
 			Sources     = new List<WireConnection>();
 			Drains      = new List<WireConnection>();
@@ -32,19 +32,10 @@ namespace nlconv
 			StringBuilder sb = new StringBuilder();
 			sb.Append("wire ");
 			sb.Append(Name);
-			switch (Class)
+			if (!string.IsNullOrEmpty(Signal))
 			{
-				case WireClass.None:                             break;
-				case WireClass.Ground:  sb.Append(":gnd");       break;
-				case WireClass.Power:   sb.Append(":pwr");       break;
-				case WireClass.Decoded: sb.Append(":dec");       break;
-				case WireClass.Control: sb.Append(":ctl");       break;
-				case WireClass.Clock:   sb.Append(":clk");       break;
-				case WireClass.Data:    sb.Append(":data");      break;
-				case WireClass.Address: sb.Append(":adr");       break;
-				case WireClass.Reset:   sb.Append(":rst");       break;
-				case WireClass.Analog:  sb.Append(":analog");    break;
-				default:                sb.Append(":<invalid>"); break;
+				sb.Append(":");
+				sb.Append(Signal);
 			}
 			foreach (var src in Sources)
 			{
@@ -114,7 +105,7 @@ namespace nlconv
 
 		public virtual void ToHtml(TextWriter s, Netlist netlist)
 		{
-			s.Write("<h2 id=\"w_" + Name.ToHtmlId() + "\">Wire - <span class=\"" + CssClass + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span>");
+			s.Write("<h2 id=\"w_" + Name.ToHtmlId() + "\">Wire - <span class=\"" + GetCssClass(netlist) + "\">" + Name.ToUpperInvariant().ToHtmlName() + "</span>");
 			if (Alias.Count != 0)
 			{
 				s.Write(" (alias:");
@@ -125,7 +116,7 @@ namespace nlconv
 			s.Write("</h2>");
 			s.Write("<dl>");
 			s.Write("<dt>Name</dt><dd>" + Name.ToHtmlName() + "</dd>");
-			s.Write("<dt>Class</dt><dd>" + ClassString + "</dd>");
+			s.Write("<dt>Signal Class</dt><dd>" + GetClassString(netlist).ToHtml() + "</dd>");
 			if (Coords.Count != 0 && !string.IsNullOrEmpty(netlist.MapUrl))
 				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=w:" + Name.ToUrl() + "\">Highlight on map</a></dd>");
 			else
@@ -139,69 +130,32 @@ namespace nlconv
 				s.Write("<p>" + Description.ToHtml() + "</p>");
 		}
 
-		public string ClassString
+		public string GetClassString(Netlist netlist)
 		{
-			get
-			{
-				switch (Class)
-				{
-					case WireClass.Ground:  return "GND";
-					case WireClass.Power:   return "VDD";
-					case WireClass.Decoded: return "decoded";
-					case WireClass.Control: return "control";
-					case WireClass.Clock:   return "clock";
-					case WireClass.Data:    return "data";
-					case WireClass.Address: return "address";
-					case WireClass.Reset:   return "reset";
-					case WireClass.Analog:  return "analog";
-				}
+			if (string.IsNullOrEmpty(Signal))
 				return "-";
-			}
+			if (string.IsNullOrEmpty(netlist.Signals[Signal].Description))
+				return Signal;
+			return netlist.Signals[Signal].Description;
 		}
 
-		public string CssClass
+		public string GetCssClass(Netlist netlist)
 		{
-			get
-			{
-				switch (Class)
-				{
-					case WireClass.Ground:  return "bg_black";
-					case WireClass.Power:   return "bg_red";
-					case WireClass.Decoded: return "bg_orange";
-					case WireClass.Control: return "bg_purple";
-					case WireClass.Clock:   return "bg_magenta";
-					case WireClass.Data:    return "bg_blue";
-					case WireClass.Address: return "bg_yellow";
-					case WireClass.Reset:   return "bg_teal";
-					case WireClass.Analog:  return "bg_lime";
-				}
+			if (string.IsNullOrEmpty(Signal))
 				return "bg_blue";
-			}
+			return "bg_" + netlist.Signals[Signal].Color;
 		}
 
-		public Color Color
+		public Color GetColor(Netlist netlist)
 		{
-			get
-			{
-				switch (Class)
-				{
-					case WireClass.Ground:  return Color.Black;
-					case WireClass.Power:   return Color.Red;
-					case WireClass.Decoded: return Color.Orange;
-					case WireClass.Control: return Color.Purple;
-					case WireClass.Clock:   return Color.Magenta;
-					case WireClass.Data:    return Color.Blue;
-					case WireClass.Address: return Color.Yellow;
-					case WireClass.Reset:   return Color.Teal;
-					case WireClass.Analog:  return Color.Green;
-				}
+			if (string.IsNullOrEmpty(Signal))
 				return Color.Blue;
-			}
+			return GetColorFromString(netlist.Signals[Signal].Color);
 		}
 
-		public virtual void Draw(Graphics g, float sx, float sy)
+		public virtual void Draw(Netlist netlist, Graphics g, float sx, float sy)
 		{
-			Pen pen = new Pen(Color, 5.0f);
+			Pen pen = new Pen(GetColor(netlist), 5.0f);
 			foreach (var c in Coords)
 			{
 				PointF[] pts = new PointF[c.Count / 2];

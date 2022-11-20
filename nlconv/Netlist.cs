@@ -178,7 +178,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			SignalDefinition s = new SignalDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color, desc);
+			SignalDefinition s = new SignalDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name.CanonicalizeBars(), color, desc);
 
 			ParseEOT(n);
 			return s;
@@ -384,44 +384,13 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			CellDefinition c = new CellDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat);
+			CellDefinition c = new CellDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat.CanonicalizeBars());
 
 			foreach (var kvp in coords)
 				c.AddCoords(kvp.Key, kvp.Value);
 
 			ParseEOT(n);
 			return c;
-		}
-
-		protected static WireClass ParseWireClass(LinkedListNode<LexerToken> n)
-		{
-			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Wire class expected.");
-			switch (n.Value.String.ToLowerInvariant())
-			{
-			case "none":
-				return WireClass.None;
-			case "gnd":
-				return WireClass.Ground;
-			case "pwr":
-				return WireClass.Power;
-			case "dec":
-				return WireClass.Decoded;
-			case "ctl":
-				return WireClass.Control;
-			case "clk":
-				return WireClass.Clock;
-			case "data":
-				return WireClass.Data;
-			case "adr":
-				return WireClass.Address;
-			case "rst":
-				return WireClass.Reset;
-			case "analog":
-				return WireClass.Analog;
-			default:
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Invalid wire class.");
-			}
 		}
 
 		protected static WireConnection ParseWireConnection(ref LinkedListNode<LexerToken> n)
@@ -467,11 +436,13 @@ namespace nlconv
 				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Wire name expected.");
 			n = n.Next;
 
-			WireClass cls = WireClass.None;
+			string sig = "";
 			if (n.Value.Type == LexerTokenType.Colon)
 			{
 				n = n.Next;
-				cls = ParseWireClass(n);
+				if (n.Value.Type != LexerTokenType.Name)
+					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Wire signal class expected.");
+				sig = n.Value.String.CanonicalizeBars();
 				n = n.Next;
 			}
 
@@ -492,7 +463,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			WireDefinition w = new WireDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), cls, desc);
+			WireDefinition w = new WireDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), sig, desc);
 
 			w.Sources.AddRange(sources);
 
@@ -500,7 +471,7 @@ namespace nlconv
 				w.Drains.AddRange(drains);
 
 			foreach (var kvp in coords)
-				w.Coords.Add(kvp.Value); // We just ignore the string before the @
+				w.Coords.Add(kvp.Value);
 
 			ParseEOT(n);
 			return w;
@@ -669,7 +640,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			CategoryDefinition c = new CategoryDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name, color, desc);
+			CategoryDefinition c = new CategoryDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name.CanonicalizeBars(), color, desc);
 
 			ParseEOT(n);
 			return c;
@@ -1085,7 +1056,7 @@ namespace nlconv
 		public virtual void DrawWires(Graphics g, float sx, float sy)
 		{
 			foreach (var x in Wires)
-				x.Value.Draw(g, sx, sy);
+				x.Value.Draw(this, g, sx, sy);
 		}
 
 		public virtual void DrawLabels(Graphics g, float sx, float sy)
