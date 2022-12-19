@@ -989,7 +989,7 @@ namespace nlconv
 				CheckWire(kvp.Value);
 
 			// Check that there is no cell with a port that has more than one connection to a wire.
-			foreach(var kvp in Wires)
+			foreach (var kvp in Wires)
 			{
 				List<WireConnection> both = new List<WireConnection>();
 				both.AddRange(kvp.Value.Sources);
@@ -1004,11 +1004,31 @@ namespace nlconv
 				}
 			}
 
-			foreach(var kvp in Wires)
+			foreach (var kvp in Wires)
 			{
 				kvp.Value.Sources.Sort();
 				kvp.Value.Drains.Sort();
 			}
+
+			// Warn on not connected input ports
+			int wcount = 0;
+			foreach (var kvp in Cells)
+			{
+				TypeDefinition t = Types[kvp.Value.Type];
+				foreach (var p in t.Ports)
+				{
+					if (p.Value.Direction != PortDirection.Input && p.Value.Direction != PortDirection.Bidir)
+						continue;
+					WireConnection wc = new WireConnection(kvp.Value.Name, p.Value.Name);
+					if (Cons.ContainsKey(wc))
+						continue;
+					wcount++;
+					if (wcount <= 5)
+						Console.Error.WriteLine("Warning: Input/bidir port not connected: " + wc.ToString());
+				}
+			}
+			if (wcount > 5)
+				Console.Error.WriteLine("Warning: " + (wcount - 5) + " more warnings like previous one not printed.");
 		}
 
 		public override string ToString()
