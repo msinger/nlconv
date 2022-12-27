@@ -9,8 +9,8 @@ namespace nlconv
 		public readonly string Color;
 		public readonly string Description;
 
-		public CategoryDefinition(int pos, int line, int col, string name, string color, string desc)
-			: base(pos, line, col)
+		public CategoryDefinition(Position pos, string name, string color, string desc)
+			: base(pos)
 		{
 			Name        = name;
 			Color       = color;

@@ -8,8 +8,8 @@ namespace nlconv
 		public readonly List<string> Alias;
 		public readonly AliasType    Type;
 
-		public AliasDefinition(int pos, int line, int col, string name, AliasType type)
-			: base(pos, line, col)
+		public AliasDefinition(Position pos, string name, AliasType type)
+			: base(pos)
 		{
 			Name  = name;
 			Type  = type;

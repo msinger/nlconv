@@ -9,17 +9,13 @@ namespace nlconv
 		public readonly string Cell;
 		public readonly string Port;
 
-		public WireConnection(int pos, int line, int col, string cell, string port) : base(pos, line, col)
+		public WireConnection(Position pos, string cell, string port) : base(pos)
 		{
 			Cell = cell;
 			Port = port;
 		}
 
-		public WireConnection(string cell, string port) : base()
-		{
-			Cell = cell;
-			Port = port;
-		}
+		public WireConnection(string cell, string port) : this(new Position(), cell, port) { }
 
 		public override string ToString()
 		{

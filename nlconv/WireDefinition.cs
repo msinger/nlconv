@@ -15,8 +15,8 @@ namespace nlconv
 		public readonly List<List<float>>    Coords;
 		public readonly List<string>         Alias;
 
-		public WireDefinition(int pos, int line, int col, string name, string sig, string desc)
-			: base(pos, line, col)
+		public WireDefinition(Position pos, string name, string sig, string desc)
+			: base(pos)
 		{
 			Name        = name;
 			Signal      = sig;

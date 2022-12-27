@@ -20,7 +20,7 @@ namespace nlconv
 		public readonly List<string>     Alias;
 		public readonly string           Category;
 
-		public CellDefinition(int pos, int line, int col,
+		public CellDefinition(Position         pos,
 		                      string           name,
 		                      string           type,
 		                      CellOrientation? orientation,
@@ -31,7 +31,7 @@ namespace nlconv
 		                      bool             trivial,
 		                      string           desc,
 		                      string           category)
-			: base(pos, line, col)
+			: base(pos)
 		{
 			Name        = name;
 			Type        = type;

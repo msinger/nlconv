@@ -9,8 +9,8 @@ namespace nlconv
 		public readonly string Color;
 		public readonly string Description;
 
-		public SignalDefinition(int pos, int line, int col, string name, string color, string desc)
-			: base(pos, line, col)
+		public SignalDefinition(Position pos, string name, string color, string desc)
+			: base(pos)
 		{
 			Name        = name;
 			Color       = color;

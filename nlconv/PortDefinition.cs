@@ -7,7 +7,7 @@ namespace nlconv
 		public readonly string        Name;
 		public readonly PortDirection Direction;
 
-		public PortDefinition(int pos, int line, int col, string name, PortDirection dir) : base(pos, line, col)
+		public PortDefinition(Position pos, string name, PortDirection dir) : base(pos)
 		{
 			Name      = name;
 			Direction = dir;

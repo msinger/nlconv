@@ -17,7 +17,7 @@ namespace nlconv
 		public readonly Vector          Coords;
 		public readonly Alignment       Alignment;
 
-		public LabelDefinition(int pos, int line, int col,
+		public LabelDefinition(Position        pos,
 		                       string          text,
 		                       string          color,
 		                       float           size,
@@ -25,7 +25,7 @@ namespace nlconv
 		                       bool            flipped,
 		                       Vector          coords,
 		                       Alignment       alignment)
-			: base(pos, line, col)
+			: base(pos)
 		{
 			Text        = text;
 			Color       = color;

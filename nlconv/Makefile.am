@@ -27,6 +27,7 @@ FILES = \
 	ParserToken.cs \
 	PortDefinition.cs \
 	PortDirection.cs \
+	Position.cs \
 	Program.cs \
 	Properties/AssemblyInfo.cs \
 	QuadTree.cs \

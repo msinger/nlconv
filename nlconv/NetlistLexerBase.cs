@@ -13,21 +13,23 @@ namespace nlconv
 		protected static LinkedListNode<LexerToken> Lex(string line)
 		{
 			int pos = 0;
-			return Lex(line, 1, ref pos);
+			return Lex(line, null, 1, ref pos);
 		}
 
-		protected static LinkedListNode<LexerToken> Lex(string line, int lineNum, ref int pos)
+		protected static LinkedListNode<LexerToken> Lex(string line, string file, int lineNum, ref int pos)
 		{
 			LinkedList<LexerToken> t = new LinkedList<LexerToken>();
 			StringBuilder sb = new StringBuilder();
 			int col = -1;
 			char c = '\0';
+			Position fpos;
 
 			pos--;
 		read:
 			pos++;
 			col++;
 		next:
+			fpos = new Position(file, pos, lineNum, col + 1);
 			if (line.Length == col)
 				return t.First;
 
@@ -39,32 +41,32 @@ namespace nlconv
 			case '#':
 				return t.First;
 			case ',':
-				t.AddLast(new LexerToken(pos, lineNum, col + 1, LexerTokenType.Comma));
+				t.AddLast(new LexerToken(fpos, LexerTokenType.Comma));
 				goto read;
 			case '+':
-				t.AddLast(new LexerToken(pos, lineNum, col + 1, LexerTokenType.Plus));
+				t.AddLast(new LexerToken(fpos, LexerTokenType.Plus));
 				goto read;
 			case '-':
 				if (col + 1 < line.Length && line[col + 1] == '>')
 				{
-					t.AddLast(new LexerToken(pos, lineNum, col + 1, LexerTokenType.To));
+					t.AddLast(new LexerToken(fpos, LexerTokenType.To));
 					pos++;
 					col++;
 					goto read;
 				}
-				t.AddLast(new LexerToken(pos, lineNum, col + 1, LexerTokenType.Minus));
+				t.AddLast(new LexerToken(fpos, LexerTokenType.Minus));
 				goto read;
 			case ':':
-				t.AddLast(new LexerToken(pos, lineNum, col + 1, LexerTokenType.Colon));
+				t.AddLast(new LexerToken(fpos, LexerTokenType.Colon));
 				goto read;
 			case ';':
-				t.AddLast(new LexerToken(pos, lineNum, col + 1, LexerTokenType.EOT));
+				t.AddLast(new LexerToken(fpos, LexerTokenType.EOT));
 				goto read;
 			case '.':
-				t.AddLast(new LexerToken(pos, lineNum, col + 1, LexerTokenType.Dot));
+				t.AddLast(new LexerToken(fpos, LexerTokenType.Dot));
 				goto read;
 			case '@':
-				t.AddLast(new LexerToken(pos, lineNum, col + 1, LexerTokenType.At));
+				t.AddLast(new LexerToken(fpos, LexerTokenType.At));
 				goto read;
 			}
 
@@ -75,15 +77,13 @@ namespace nlconv
 			// String?
 			if (c == '"')
 			{
-				int nv_pos = pos;
-				int nv_col = col + 1;
 				bool escaped = false;
 				sb.Clear();
 				while (true)
 				{
 					col++;
 					if (line.Length == col)
-						throw new NetlistFormatException(nv_pos, lineNum, nv_col, "Unterminated string literal encountered by lexer.");
+						throw new NetlistFormatException(fpos, "Unterminated string literal encountered by lexer.");
 					pos++;
 					c = line[col];
 					if (escaped)
@@ -108,15 +108,13 @@ namespace nlconv
 					}
 					break;
 				}
-				t.AddLast(new LexerToken(nv_pos, lineNum, nv_col, LexerTokenType.String, sb.ToString()));
+				t.AddLast(new LexerToken(fpos, LexerTokenType.String, sb.ToString()));
 				goto read;
 			}
 
 			// Start of name or value?
 			if (char.IsLetterOrDigit(c) || c == '_' || c == '~' || c == '{' || c == '}' || c == '[' || c == ']')
 			{
-				int nv_pos = pos;
-				int nv_col = col + 1;
 				bool is_name = false;
 				bool is_val = false;
 				sb.Clear();
@@ -141,18 +139,18 @@ namespace nlconv
 				}
 				if (is_name)
 				{
-					t.AddLast(new LexerToken(nv_pos, lineNum, nv_col, LexerTokenType.Name, sb.ToString()));
+					t.AddLast(new LexerToken(fpos, LexerTokenType.Name, sb.ToString()));
 					goto next;
 				}
 				string str = sb.ToString();
 				float val;
 				if (!float.TryParse(str, NumberStyles.AllowDecimalPoint, NumberFormatInfo.InvariantInfo, out val))
-					throw new NetlistFormatException(nv_pos, lineNum, nv_col, "Invalid floating point number encountered by lexer.");
-				t.AddLast(new LexerToken(nv_pos, lineNum, nv_col, LexerTokenType.Value, val));
+					throw new NetlistFormatException(fpos, "Invalid floating point number encountered by lexer.");
+				t.AddLast(new LexerToken(fpos, LexerTokenType.Value, val));
 				goto next;
 			}
 
-			throw new NetlistFormatException(pos, lineNum, col, "Unknown input character encountered by lexer.");
+			throw new NetlistFormatException(fpos, "Unknown input character encountered by lexer.");
 		}
 	}
 }

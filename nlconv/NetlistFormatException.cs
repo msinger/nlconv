@@ -5,25 +5,15 @@ namespace nlconv
 	[Serializable]
 	public class NetlistFormatException : FormatException
 	{
-		private readonly int pos, line, col;
+		private readonly Position pos;
 
-		public NetlistFormatException(int pos, int line, int col, string message, Exception inner)
+		public NetlistFormatException(Position pos, string message, Exception inner)
 			: base(message, inner)
 		{
-			this.pos  = pos;
-			this.line = line;
-			this.col  = col;
+			this.pos = pos;
 		}
 
-		public NetlistFormatException(int pos, int line, int col, string message)
-			: this(pos, line, col, message, null)
-		{ }
-
-		public NetlistFormatException(int pos, string message, Exception inner)
-			: this(pos, 1, pos + 1, message, inner)
-		{ }
-
-		public NetlistFormatException(int pos, string message)
+		public NetlistFormatException(Position pos, string message)
 			: this(pos, message, null)
 		{ }
 
@@ -31,33 +21,29 @@ namespace nlconv
 		                                 System.Runtime.Serialization.StreamingContext  context)
 			: base(info, context)
 		{
-			pos  = info.GetInt32("Position");
-			line = info.GetInt32("Line");
-			col  = info.GetInt32("Column");
+			pos = (Position)info.GetValue("Position", typeof(Position));
 		}
 
 		public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info,
 		                                   System.Runtime.Serialization.StreamingContext  context)
 		{
 			base.GetObjectData(info, context);
-			info.AddValue("Position", pos,  typeof(int));
-			info.AddValue("Line",     line, typeof(int));
-			info.AddValue("Column",   col,  typeof(int));
+			info.AddValue("Position", pos, typeof(Position));
 		}
 
 		public int Position
 		{
-			get { return pos; }
+			get { return pos.Pos; }
 		}
 
 		public int Line
 		{
-			get { return line; }
+			get { return pos.Line; }
 		}
 
 		public int Column
 		{
-			get { return col; }
+			get { return pos.Col; }
 		}
 
 		public override string Message
@@ -65,10 +51,12 @@ namespace nlconv
 			get
 			{
 				string s = base.Message;
-				if (line != 0 && col != 0)
-					s = line.ToString() + ":" + col.ToString() + ": " + s;
-				else if (col != 0)
-					s = col.ToString() + ": " + s;
+				if (pos.Line != 0 && pos.Col != 0)
+					s = pos.Line.ToString() + ":" + pos.Col.ToString() + ": " + s;
+				else if (pos.Col != 0)
+					s = pos.Col.ToString() + ": " + s;
+				if (!string.IsNullOrEmpty(pos.File))
+					s = pos.File + ":" + s;
 				return s;
 			}
 		}

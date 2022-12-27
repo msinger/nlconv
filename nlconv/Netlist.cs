@@ -34,13 +34,13 @@ namespace nlconv
 		protected static void ParseEOT(LinkedListNode<LexerToken> n)
 		{
 			if (n.Value.Type != LexerTokenType.EOT)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Semicolon expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Semicolon expected.");
 		}
 
 		protected static PortDirection ParsePortDirection(LinkedListNode<LexerToken> n)
 		{
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Port direction expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Port direction expected.");
 			switch (n.Value.String.ToLowerInvariant())
 			{
 			case "in":
@@ -58,7 +58,7 @@ namespace nlconv
 			case "nc":
 				return PortDirection.NotConnected;
 			default:
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Invalid port direction.");
+				throw new NetlistFormatException(n.Value.Pos, "Invalid port direction.");
 			}
 		}
 
@@ -67,7 +67,7 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Port name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Port name expected.");
 
 			PortDirection d = PortDirection.Input;
 			n = n.Next;
@@ -78,7 +78,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			return new PortDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Value.String.CanonicalizeBars(), d);
+			return new PortDefinition(me.Value.Pos, me.Value.String.CanonicalizeBars(), d);
 		}
 
 		protected static IList<PortDefinition> ParsePortDefinitionList(ref LinkedListNode<LexerToken> n)
@@ -96,11 +96,11 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "type")
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Type definition expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Type definition expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Type name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Type name expected.");
 			string name = n.Value.String;
 			n = n.Next;
 
@@ -134,12 +134,12 @@ namespace nlconv
 				}
 			}
 
-			TypeDefinition t = new TypeDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name.CanonicalizeBars(), color, desc, doc);
+			TypeDefinition t = new TypeDefinition(me.Value.Pos, name.CanonicalizeBars(), color, desc, doc);
 
 			foreach (var p in ports)
 			{
 				if (t.Ports.ContainsKey(p.Name))
-					throw new NetlistFormatException(p.Pos, p.Line, p.Col, "Port name already in use.");
+					throw new NetlistFormatException(p.Pos, "Port name already in use.");
 				t.Ports.Add(p.Name, p);
 			}
 
@@ -155,11 +155,11 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "signal")
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Signal definition expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Signal definition expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Signal name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Signal name expected.");
 			string name = n.Value.String;
 			n = n.Next;
 
@@ -178,7 +178,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			SignalDefinition s = new SignalDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name.CanonicalizeBars(), color, desc);
+			SignalDefinition s = new SignalDefinition(me.Value.Pos, name.CanonicalizeBars(), color, desc);
 
 			ParseEOT(n);
 			return s;
@@ -187,7 +187,7 @@ namespace nlconv
 		protected static string ParseColor(LinkedListNode<LexerToken> n)
 		{
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Color expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Color expected.");
 			string color = n.Value.String.ToLowerInvariant();
 			switch (color)
 			{
@@ -209,7 +209,7 @@ namespace nlconv
 			case "white":
 				return color;
 			default:
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Invalid color.");
+				throw new NetlistFormatException(n.Value.Pos, "Invalid color.");
 			}
 		}
 
@@ -245,7 +245,7 @@ namespace nlconv
 			{
 				n = n.Next;
 				if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "flip")
-					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Invalid cell orientation.");
+					throw new NetlistFormatException(n.Value.Pos, "Invalid cell orientation.");
 				f = true;
 				n = n.Next;
 			}
@@ -263,7 +263,7 @@ namespace nlconv
 			}
 
 			if (n.Value.Type != LexerTokenType.Value)
-				throw new NetlistFormatException(me.Value.Pos, me.Value.Line, me.Value.Col, "Float number expected.");
+				throw new NetlistFormatException(me.Value.Pos, "Float number expected.");
 			f *= n.Value.Value;
 			n = n.Next;
 
@@ -299,7 +299,7 @@ namespace nlconv
 			}
 
 			if (n.Value.Type != LexerTokenType.At)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Coordinate list (@) expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Coordinate list (@) expected.");
 			n = n.Next;
 
 			return new KeyValuePair<string, List<float>>(name, ParseFloatList(ref n));
@@ -325,19 +325,19 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "cell")
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell definition expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Cell definition expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Cell name expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Colon)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Colon expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Colon expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell type expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Cell type expected.");
 			string t = n.Value.String.CanonicalizeBars();
 			n = n.Next;
 
@@ -373,7 +373,7 @@ namespace nlconv
 			{
 				n = n.Next;
 				if (n.Value.Type != LexerTokenType.Name)
-					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Category name expected.");
+					throw new NetlistFormatException(n.Value.Pos, "Category name expected.");
 				cat = n.Value.String;
 				n = n.Next;
 			}
@@ -384,7 +384,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			CellDefinition c = new CellDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat.CanonicalizeBars());
+			CellDefinition c = new CellDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat.CanonicalizeBars());
 
 			foreach (var kvp in coords)
 				c.AddCoords(kvp.Key, kvp.Value);
@@ -398,18 +398,18 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Cell name expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Dot)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Dot (.) expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Dot (.) expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Port name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Port name expected.");
 			n = n.Next;
 
-			return new WireConnection(me.Value.Pos, me.Value.Line, me.Value.Col, me.Value.String.CanonicalizeBars(), me.Next.Next.Value.String.CanonicalizeBars());
+			return new WireConnection(me.Value.Pos, me.Value.String.CanonicalizeBars(), me.Next.Next.Value.String.CanonicalizeBars());
 		}
 
 		protected static IList<WireConnection> ParseWireConnectionList(ref LinkedListNode<LexerToken> n)
@@ -429,11 +429,11 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "wire")
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Wire definition expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Wire definition expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Wire name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Wire name expected.");
 			n = n.Next;
 
 			string sig = "";
@@ -441,7 +441,7 @@ namespace nlconv
 			{
 				n = n.Next;
 				if (n.Value.Type != LexerTokenType.Name)
-					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Wire signal class expected.");
+					throw new NetlistFormatException(n.Value.Pos, "Wire signal class expected.");
 				sig = n.Value.String.CanonicalizeBars();
 				n = n.Next;
 			}
@@ -463,7 +463,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			WireDefinition w = new WireDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, me.Next.Value.String.CanonicalizeBars(), sig, desc);
+			WireDefinition w = new WireDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), sig, desc);
 
 			w.Sources.AddRange(sources);
 
@@ -482,12 +482,12 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "alias")
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Alias definition expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Alias definition expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name || (n.Value.String.ToLowerInvariant() != "cell" &&
 			                                            n.Value.String.ToLowerInvariant() != "wire"))
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell or wire indicator expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Cell or wire indicator expected.");
 			AliasType t = n.Value.String.ToLowerInvariant() == "wire" ? AliasType.Wire : AliasType.Cell;
 			n = n.Next;
 
@@ -497,24 +497,24 @@ namespace nlconv
 				string s = n.Value.String.CanonicalizeBars();
 
 				if (l.Contains(s))
-					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Duplicate alias found.");
+					throw new NetlistFormatException(n.Value.Pos, "Duplicate alias found.");
 
 				l.Add(s);
 				n = n.Next;
 			}
 
 			if (l.Count == 0)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "At least one alias expected.");
+				throw new NetlistFormatException(n.Value.Pos, "At least one alias expected.");
 
 			if (n.Value.Type != LexerTokenType.To)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Arrow (->) expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Arrow (->) expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Cell name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Cell name expected.");
 			n = n.Next;
 
-			AliasDefinition a = new AliasDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, n.Previous.Value.String.CanonicalizeBars(), t);
+			AliasDefinition a = new AliasDefinition(me.Value.Pos, n.Previous.Value.String.CanonicalizeBars(), t);
 			a.Alias.AddRange(l);
 
 			ParseEOT(n);
@@ -568,7 +568,7 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "label")
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Label definition expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Label definition expected.");
 			n = n.Next;
 
 			string text = "";
@@ -589,7 +589,7 @@ namespace nlconv
 			var n_sz = n;
 			float size = ParseFloat(ref n);
 			if (size < 0.0f)
-				throw new NetlistFormatException(n_sz.Value.Pos, n_sz.Value.Line, n_sz.Value.Col, "Size must be positive.");
+				throw new NetlistFormatException(n_sz.Value.Pos, "Size must be positive.");
 
 			CellOrientation? o;
 			bool? f;
@@ -600,13 +600,13 @@ namespace nlconv
 			var n_c = n;
 			var coords = ParseCoord(ref n);
 			if (coords.Value.Count != 2)
-				throw new NetlistFormatException(n_c.Value.Pos, n_c.Value.Line, n_c.Value.Col, "Coordinates must be one point (X,Y).");
+				throw new NetlistFormatException(n_c.Value.Pos, "Coordinates must be one point (X,Y).");
 
 			Alignment? a;
 			ParseAlignment(ref n, out a);
 			if (!a.HasValue) a = Alignment.Center;
 
-			LabelDefinition l = new LabelDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, text, color, size, o.Value, f.Value, new Vector(coords.Value[0], coords.Value[1]), a.Value);
+			LabelDefinition l = new LabelDefinition(me.Value.Pos, text, color, size, o.Value, f.Value, new Vector(coords.Value[0], coords.Value[1]), a.Value);
 
 			ParseEOT(n);
 			return l;
@@ -617,11 +617,11 @@ namespace nlconv
 			LinkedListNode<LexerToken> me = n;
 
 			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "category")
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Category definition expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Category definition expected.");
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Name)
-				throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Category name expected.");
+				throw new NetlistFormatException(n.Value.Pos, "Category name expected.");
 			string name = n.Value.String;
 			n = n.Next;
 
@@ -640,7 +640,7 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			CategoryDefinition c = new CategoryDefinition(me.Value.Pos, me.Value.Line, me.Value.Col, name.CanonicalizeBars(), color, desc);
+			CategoryDefinition c = new CategoryDefinition(me.Value.Pos, name.CanonicalizeBars(), color, desc);
 
 			ParseEOT(n);
 			return c;
@@ -671,15 +671,16 @@ namespace nlconv
 				case "category":
 					return new ParserToken[] { ParseCategoryDefinition(n) };
 				default:
-					throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Invalid statement.");
+					throw new NetlistFormatException(n.Value.Pos, "Invalid statement.");
 				}
 			}
 
-			throw new NetlistFormatException(n.Value.Pos, n.Value.Line, n.Value.Col, "Unexpected token encountered by top level parser.");
+			throw new NetlistFormatException(n.Value.Pos, "Unexpected token encountered by top level parser.");
 		}
 
-		private int pos     = 0;
-		private int lineNum = 1;
+		private string file;
+		private int    pos     = 0;
+		private int    lineNum = 1;
 		private LinkedList<LexerToken> fifo = new LinkedList<LexerToken>();
 
 		private LinkedListNode<LexerToken> DequeueStatement()
@@ -708,10 +709,10 @@ namespace nlconv
 		protected void CheckCell(CellDefinition cell)
 		{
 			if (!Types.ContainsKey(cell.Type))
-				throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Type '" + cell.Type + "' not found.");
+				throw new NetlistFormatException(cell.Pos, "Type '" + cell.Type + "' not found.");
 
 			if (!string.IsNullOrEmpty(cell.Category) && !Categories.ContainsKey(cell.Category))
-				throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Category '" + cell.Category + "' not found.");
+				throw new NetlistFormatException(cell.Pos, "Category '" + cell.Category + "' not found.");
 
 			TypeDefinition t = Types[cell.Type];
 
@@ -720,20 +721,20 @@ namespace nlconv
 				if (kvp.Key == "")
 				{
 					if (kvp.Value.Count != 1)
-						throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Multiple cell coordinates.");
+						throw new NetlistFormatException(cell.Pos, "Multiple cell coordinates.");
 					if (kvp.Value[0].Count != 4)
-						throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Cell coordinates don't describe a rectangle (need four numbers Y1,X1,Y2,X2).");
+						throw new NetlistFormatException(cell.Pos, "Cell coordinates don't describe a rectangle (need four numbers Y1,X1,Y2,X2).");
 				}
 				else
 				{
 					if (!t.Ports.ContainsKey(kvp.Key))
-						throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Type '" + cell.Type + "' doesn't have a port named '" + kvp.Key + "'.");
+						throw new NetlistFormatException(cell.Pos, "Type '" + cell.Type + "' doesn't have a port named '" + kvp.Key + "'.");
 					foreach (var l in kvp.Value)
 					{
 						if ((l.Count & 1) != 0)
-							throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Cell port '" + kvp.Key + "' has odd number of coordinates.");
+							throw new NetlistFormatException(cell.Pos, "Cell port '" + kvp.Key + "' has odd number of coordinates.");
 						if (l.Count == 0)
-							throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Cell port '" + kvp.Key + "' has no coordinates.");
+							throw new NetlistFormatException(cell.Pos, "Cell port '" + kvp.Key + "' has no coordinates.");
 					}
 				}
 			}
@@ -802,22 +803,22 @@ namespace nlconv
 			foreach (var c in both)
 			{
 				if (!Cells.ContainsKey(c.Cell))
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Cell '" + c.Cell + "' not found.");
+					throw new NetlistFormatException(wire.Pos, "Cell '" + c.Cell + "' not found.");
 
 				CellDefinition cell = Cells[c.Cell];
 				TypeDefinition t = Types[cell.Type];
 
 				if (!t.Ports.ContainsKey(c.Port))
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Cell '" + c.Cell + "' (type '" + cell.Type + "') doesn't have a port named '" + c.Port + "'.");
+					throw new NetlistFormatException(wire.Pos, "Cell '" + c.Cell + "' (type '" + cell.Type + "') doesn't have a port named '" + c.Port + "'.");
 
 				PortDefinition p = t.Ports[c.Port];
 
 				// Multiple identical WireConnections in list?
 				if (both.IndexOf(c) != both.LastIndexOf(c))
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Connection '" + c.ToString() + "' listed more than once.");
+					throw new NetlistFormatException(wire.Pos, "Connection '" + c.ToString() + "' listed more than once.");
 
 				if (p.Direction == PortDirection.NotConnected)
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') mustn't have a connection.");
+					throw new NetlistFormatException(wire.Pos, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') mustn't have a connection.");
 			}
 
 			int drvTri  = 0;
@@ -830,17 +831,17 @@ namespace nlconv
 				PortDefinition p = t.Ports[c.Port];
 
 				if (p.Direction != PortDirection.Output && p.Direction != PortDirection.Tristate && p.Direction != PortDirection.Bidir && p.Direction != PortDirection.OutputLow && p.Direction != PortDirection.OutputHigh)
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is not an output or tri-state.");
+					throw new NetlistFormatException(wire.Pos, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is not an output or tri-state.");
 
 				if (p.Direction == PortDirection.Output && wire.Sources.Count != 1 && !AreAllParallelInverters(wire.Sources))
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is an output (not tri-state), but there are multiple entries in source list, which do not come from parallel inverters.");
+					throw new NetlistFormatException(wire.Pos, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is an output (not tri-state), but there are multiple entries in source list, which do not come from parallel inverters.");
 
 				drvTri  |= p.Direction == PortDirection.Tristate || p.Direction == PortDirection.Bidir ? 1 : 0;
 				drvOut0 |= p.Direction == PortDirection.OutputLow  ? 1 : 0;
 				drvOut1 |= p.Direction == PortDirection.OutputHigh ? 1 : 0;
 
 				if (drvTri + drvOut0 + drvOut1 > 1)
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') has incompatible/short-circuiting drivers in source list (combination of tri-state, bidir, output-low or output-high).");
+					throw new NetlistFormatException(wire.Pos, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') has incompatible/short-circuiting drivers in source list (combination of tri-state, bidir, output-low or output-high).");
 			}
 
 			foreach (var c in wire.Drains)
@@ -850,7 +851,7 @@ namespace nlconv
 				PortDefinition p = t.Ports[c.Port];
 
 				if (p.Direction != PortDirection.Input)
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in drain list is not an input.");
+					throw new NetlistFormatException(wire.Pos, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in drain list is not an input.");
 			}
 
 			foreach (var c in wire.Sources)
@@ -865,15 +866,15 @@ namespace nlconv
 			foreach (var l in wire.Coords)
 			{
 				if ((l.Count & 1) != 0)
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Wire segment has odd number of coordinates.");
+					throw new NetlistFormatException(wire.Pos, "Wire segment has odd number of coordinates.");
 				if (l.Count < 4)
-					throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Wire segment has not enough coordinates (<4) to describe a line.");
+					throw new NetlistFormatException(wire.Pos, "Wire segment has not enough coordinates (<4) to describe a line.");
 			}
 		}
 
 		public void WriteLine(string line)
 		{
-			LinkedListNode<LexerToken> lex = Lex(line, lineNum, ref pos);
+			LinkedListNode<LexerToken> lex = Lex(line, file, lineNum, ref pos);
 			lineNum++;
 			for (LinkedListNode<LexerToken> n = lex; n != null; n = n.Next)
 				fifo.AddLast(n.Value);
@@ -887,28 +888,28 @@ namespace nlconv
 					{
 						TypeDefinition td = (TypeDefinition)t;
 						if (Types.ContainsKey(td.Name))
-							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Type name already in use.");
+							throw new NetlistFormatException(t.Pos, "Type name already in use.");
 						Types.Add(td.Name, td);
 					}
 					else if (t is SignalDefinition)
 					{
 						SignalDefinition sd = (SignalDefinition)t;
 						if (Signals.ContainsKey(sd.Name))
-							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Signal name already in use.");
+							throw new NetlistFormatException(t.Pos, "Signal name already in use.");
 						Signals.Add(sd.Name, sd);
 					}
 					else if (t is CellDefinition)
 					{
 						CellDefinition cd = (CellDefinition)t;
 						if (Cells.ContainsKey(cd.Name))
-							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Cell name already in use.");
+							throw new NetlistFormatException(t.Pos, "Cell name already in use.");
 						Cells.Add(cd.Name, cd);
 					}
 					else if (t is WireDefinition)
 					{
 						WireDefinition wd = (WireDefinition)t;
 						if (Wires.ContainsKey(wd.Name))
-							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Wire name already in use.");
+							throw new NetlistFormatException(t.Pos, "Wire name already in use.");
 						Wires.Add(wd.Name, wd);
 					}
 					else if (t is AliasDefinition)
@@ -918,16 +919,16 @@ namespace nlconv
 						{
 						case AliasType.Cell:
 							if (!Cells.ContainsKey(ad.Name))
-								throw new NetlistFormatException(t.Pos, t.Line, t.Col, "No matching cell definition found prior to this alias definition.");
+								throw new NetlistFormatException(t.Pos, "No matching cell definition found prior to this alias definition.");
 							Cells[ad.Name].Alias.AddRange(ad.Alias);
 							break;
 						case AliasType.Wire:
 							if (!Wires.ContainsKey(ad.Name))
-								throw new NetlistFormatException(t.Pos, t.Line, t.Col, "No matching wire definition found prior to this alias definition.");
+								throw new NetlistFormatException(t.Pos, "No matching wire definition found prior to this alias definition.");
 							Wires[ad.Name].Alias.AddRange(ad.Alias);
 							break;
 						default:
-							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Unknown alias definition type.");
+							throw new NetlistFormatException(t.Pos, "Unknown alias definition type.");
 						}
 					}
 					else if (t is LabelDefinition)
@@ -938,12 +939,12 @@ namespace nlconv
 					{
 						CategoryDefinition cd = (CategoryDefinition)t;
 						if (Categories.ContainsKey(cd.Name))
-							throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Category name already in use.");
+							throw new NetlistFormatException(t.Pos, "Category name already in use.");
 						Categories.Add(cd.Name, cd);
 					}
 					else
 					{
-						throw new NetlistFormatException(t.Pos, t.Line, t.Col, "Unknown parser token.");
+						throw new NetlistFormatException(t.Pos, "Unknown parser token.");
 					}
 				}
 			}
@@ -954,7 +955,7 @@ namespace nlconv
 			if (fifo.Count != 0)
 			{
 				LexerToken t = fifo.First.Value;
-				throw new NetlistFormatException(t.Pos, t.Line, t.Col, "End of file expected.");
+				throw new NetlistFormatException(t.Pos, "End of file expected.");
 			}
 
 			// Check for duplicate aliases
@@ -966,7 +967,7 @@ namespace nlconv
 				foreach (var aname in cell.Alias)
 				{
 					if (names.Contains(aname))
-						throw new NetlistFormatException(cell.Pos, cell.Line, cell.Col, "Alias " + aname + " of cell " + cell.Name + " is not unique.");
+						throw new NetlistFormatException(cell.Pos, "Alias " + aname + " of cell " + cell.Name + " is not unique.");
 					names.Add(aname);
 				}
 			}
@@ -978,7 +979,7 @@ namespace nlconv
 				foreach (var aname in wire.Alias)
 				{
 					if (names.Contains(aname))
-						throw new NetlistFormatException(wire.Pos, wire.Line, wire.Col, "Alias " + aname + " of wire " + wire.Name + " is not unique.");
+						throw new NetlistFormatException(wire.Pos, "Alias " + aname + " of wire " + wire.Name + " is not unique.");
 					names.Add(aname);
 				}
 			}
@@ -999,7 +1000,7 @@ namespace nlconv
 				foreach (var wc in both)
 				{
 					if (Cons.ContainsKey(wc))
-						throw new NetlistFormatException(wc.Pos, wc.Line, wc.Col, "Connection '" + wc.ToString() + "' already made to wire '" + Cons[wc].Name + "'.");
+						throw new NetlistFormatException(wc.Pos, "Connection '" + wc.ToString() + "' already made to wire '" + Cons[wc].Name + "'.");
 					Cons.Add(wc, kvp.Value);
 				}
 			}

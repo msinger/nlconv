@@ -8,22 +8,14 @@ namespace nlconv
 {
 	public abstract class ParserToken
 	{
-		public readonly int Pos;
+		public readonly Position Pos;
 		public readonly int Line;
 		public readonly int Col;
 
-		protected ParserToken(int pos, int line, int col)
+		protected ParserToken(Position pos)
 		{
-			Pos  = pos;
-			Line = line;
-			Col  = col;
+			Pos = pos;
 		}
-
-		protected ParserToken(int pos)
-			: this (pos, 1, pos + 1)
-		{ }
-
-		protected ParserToken() : this (0) { }
 
 		protected static string CoordString(List<float> c, Func<float, float, (float, float)> fix)
 		{

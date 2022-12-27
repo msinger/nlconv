@@ -4,44 +4,28 @@ namespace nlconv
 	{
 		protected class LexerToken
 		{
-			public readonly int            Pos;
-			public readonly int            Line;
-			public readonly int            Col;
+			public readonly Position       Pos;
 			public readonly LexerTokenType Type;
 			public readonly string         String = null;
 			public readonly float          Value  = 0.0f;
 
-			public LexerToken(int pos, int line, int col, LexerTokenType type)
+			public LexerToken(Position pos, LexerTokenType type)
 			{
 				Pos  = pos;
-				Line = line;
-				Col  = col;
 				Type = type;
 			}
 
-			public LexerToken(int pos, int line, int col, LexerTokenType type, string str)
-				: this(pos, line, col, type)
+			public LexerToken(Position pos, LexerTokenType type, string str)
+				: this(pos, type)
 			{
 				String = str;
 			}
 
-			public LexerToken(int pos, int line, int col, LexerTokenType type, float val)
-				: this(pos, line, col, type)
+			public LexerToken(Position pos, LexerTokenType type, float val)
+				: this(pos, type)
 			{
 				Value = val;
 			}
-
-			public LexerToken(int pos, LexerTokenType type)
-				: this(pos, 1, pos + 1, type)
-			{ }
-
-			public LexerToken(int pos, LexerTokenType type, string str)
-				: this(pos, 1, pos + 1, type, str)
-			{ }
-
-			public LexerToken(int pos, LexerTokenType type, float val)
-				: this(pos, 1, pos + 1, type, val)
-			{ }
 
 			public override string ToString()
 			{

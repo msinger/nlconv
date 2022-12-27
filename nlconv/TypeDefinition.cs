@@ -15,12 +15,12 @@ namespace nlconv
 		public readonly Dictionary<string, PortDefinition>    Ports;
 		public readonly Dictionary<string, List<List<float>>> Coords;
 
-		public TypeDefinition(int pos, int line, int col,
-		                      string name,
-		                      string color,
-		                      string desc,
-		                      string doc)
-			: base(pos, line, col)
+		public TypeDefinition(Position pos,
+		                      string   name,
+		                      string   color,
+		                      string   desc,
+		                      string   doc)
+			: base(pos)
 		{
 			Name        = name;
 			Color       = color;
