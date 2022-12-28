@@ -26,6 +26,7 @@ namespace nlconv
 			string outPngFloor  = null;
 			string outPng       = null;
 			string outJS        = null;
+			List<string> files  = new List<string>();
 
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -47,17 +48,29 @@ namespace nlconv
 					continue;
 				}
 
-				PrintHelp();
-				return 1;
+				files.Add(args[i]);
 			}
+
+			if (files.Count == 0)
+				files.Add("-");
 
 			Netlist nl = new Netlist();
 			nl.DefaultDocUrl = "/doc/dmg_cells.html#%t";
 			nl.MapUrl        = "/dmg_cpu_b_map/?wires=0";
 
-			string l;
-			while ((l = Console.ReadLine()) != null)
-				nl.WriteLine(l);
+			foreach (string fn in files)
+			{
+				if (files.Count != 1 && fn != "-")
+					nl.NextFile(fn);
+
+				TextReader f = Console.In;
+				if (fn != "-")
+					f = File.OpenText(fn);
+
+				string l;
+				while ((l = f.ReadLine()) != null)
+					nl.WriteLine(l);
+			}
 			nl.Flush();
 
 			if (!genHtml && !genPngCells && !genPngWires && !genPngLabels && !genPngFloor && !genPng && !genJS)
@@ -69,6 +82,7 @@ namespace nlconv
 				if (!string.IsNullOrEmpty(outHtml) && outHtml != "-")
 					s = File.CreateText(outHtml);
 				GenHtml(s, nl);
+				s.Flush();
 			}
 
 			if (genPngCells)
@@ -77,6 +91,7 @@ namespace nlconv
 				if (!string.IsNullOrEmpty(outPngCells) && outPngCells != "-")
 					s = File.Create(outPngCells);
 				GenCellsPng(s, nl);
+				s.Flush();
 			}
 
 			if (genPngWires)
@@ -85,6 +100,7 @@ namespace nlconv
 				if (!string.IsNullOrEmpty(outPngWires) && outPngWires != "-")
 					s = File.Create(outPngWires);
 				GenWiresPng(s, nl);
+				s.Flush();
 			}
 
 			if (genPngLabels)
@@ -93,6 +109,7 @@ namespace nlconv
 				if (!string.IsNullOrEmpty(outPngLabels) && outPngLabels != "-")
 					s = File.Create(outPngLabels);
 				GenLabelsPng(s, nl);
+				s.Flush();
 			}
 
 			if (genPngFloor)
@@ -101,6 +118,7 @@ namespace nlconv
 				if (!string.IsNullOrEmpty(outPngFloor) && outPngFloor != "-")
 					s = File.Create(outPngFloor);
 				GenFloorplanPng(s, nl);
+				s.Flush();
 			}
 
 			if (genPng)
@@ -109,6 +127,7 @@ namespace nlconv
 				if (!string.IsNullOrEmpty(outPng) && outPng != "-")
 					s = File.Create(outPng);
 				GenAllPng(s, nl);
+				s.Flush();
 			}
 
 			if (genJS)
@@ -117,6 +136,7 @@ namespace nlconv
 				if (!string.IsNullOrEmpty(outJS) && outJS != "-")
 					s = File.CreateText(outJS);
 				nl.ToJavaScript(s);
+				s.Flush();
 			}
 
 			return 0;

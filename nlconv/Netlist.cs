@@ -950,6 +950,19 @@ namespace nlconv
 			}
 		}
 
+		public void NextFile(string fn)
+		{
+			if (fifo.Count != 0)
+			{
+				LexerToken t = fifo.First.Value;
+				throw new NetlistFormatException(t.Pos, "End of file expected.");
+			}
+
+			file    = fn;
+			pos     = 0;
+			lineNum = 1;
+		}
+
 		public void Flush()
 		{
 			if (fifo.Count != 0)
