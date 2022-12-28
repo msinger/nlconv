@@ -11,33 +11,44 @@ namespace nlconv
 	{
 		public static int Main(string[] args)
 		{
-			string option = args.Length == 1 ? args[0] : null;
-			switch (option)
+			bool   parseOptions = true;
+			bool   genHtml      = false;
+			bool   genPngCells  = false;
+			bool   genPngWires  = false;
+			bool   genPngLabels = false;
+			bool   genPngFloor  = false;
+			bool   genPng       = false;
+			bool   genJS        = false;
+			string outHtml      = null;
+			string outPngCells  = null;
+			string outPngWires  = null;
+			string outPngLabels = null;
+			string outPngFloor  = null;
+			string outPng       = null;
+			string outJS        = null;
+
+			for (int i = 0; i < args.Length; i++)
 			{
-			case null:
-			case "--html":
-			case "--png-cells":
-			case "--png-wires":
-			case "--png-labels":
-			case "--png-floor":
-			case "--png":
-			case "--js":
-				break;
-			default:
-				Console.Error.WriteLine("Usage: nlconv.exe [<OPTIONS>]");
-				Console.Error.WriteLine();
-				Console.Error.WriteLine("OPTIONS:");
-				Console.Error.WriteLine("  --html        Convert netlist from STDIN to HTML on STDOUT.");
-				Console.Error.WriteLine("  --png-cells   Convert netlist from STDIN to PNG containing all cells on STDOUT.");
-				Console.Error.WriteLine("  --png-wires   Convert netlist from STDIN to PNG containing all wires on STDOUT.");
-				Console.Error.WriteLine("  --png-labels  Convert netlist from STDIN to PNG containing all labels on STDOUT.");
-				Console.Error.WriteLine("  --png-floor   Convert netlist from STDIN to PNG containing the floorplan of all cells on STDOUT.");
-				Console.Error.WriteLine("  --png         Convert netlist from STDIN to PNG containing everything on STDOUT.");
-				Console.Error.WriteLine("  --js          Convert netlist from STDIN to Java Script containing all coordinates on STDOUT.");
-				Console.Error.WriteLine();
-				Console.Error.WriteLine("Without option, nlconv.exe just reads netlist from STDIN");
-				Console.Error.WriteLine("and checks if there are no errors.");
-				return option == "--help" ? 0 : 1;
+				if (parseOptions && args[i].StartsWith("--"))
+				{
+					string nextArg = (i + 1 < args.Length) ? args[i + 1] : null;
+					switch (args[i])
+					{
+						case "--html":       genHtml      = true; outHtml      = nextArg; i++; break;
+						case "--png-cells":  genPngCells  = true; outPngCells  = nextArg; i++; break;
+						case "--png-wires":  genPngWires  = true; outPngWires  = nextArg; i++; break;
+						case "--png-labels": genPngLabels = true; outPngLabels = nextArg; i++; break;
+						case "--png-floor":  genPngFloor  = true; outPngFloor  = nextArg; i++; break;
+						case "--png":        genPng       = true; outPng       = nextArg; i++; break;
+						case "--js":         genJS        = true; outJS        = nextArg; i++; break;
+						case "--":           parseOptions = false;                             break;
+						default:             PrintHelp(); return args[i] == "--help" ? 0 : 1;
+					}
+					continue;
+				}
+
+				PrintHelp();
+				return 1;
 			}
 
 			Netlist nl = new Netlist();
@@ -49,29 +60,86 @@ namespace nlconv
 				nl.WriteLine(l);
 			nl.Flush();
 
-			switch (option)
-			{
-			default:
+			if (!genHtml && !genPngCells && !genPngWires && !genPngLabels && !genPngFloor && !genPng && !genJS)
 				Console.Error.WriteLine("Netlist parsed successfully.");
-				return 0;
-			case "--html":
-				return GenHtml(nl);
-			case "--png-cells":
-				return GenCellsPng(nl);
-			case "--png-wires":
-				return GenWiresPng(nl);
-			case "--png-labels":
-				return GenLabelsPng(nl);
-			case "--png-floor":
-				return GenFloorplanPng(nl);
-			case "--png":
-				return GenAllPng(nl);
-			case "--js":
-				return GenJavaScript(nl);
+
+			if (genHtml)
+			{
+				TextWriter s = Console.Out;
+				if (!string.IsNullOrEmpty(outHtml) && outHtml != "-")
+					s = File.CreateText(outHtml);
+				GenHtml(s, nl);
 			}
+
+			if (genPngCells)
+			{
+				Stream s = Console.OpenStandardOutput();
+				if (!string.IsNullOrEmpty(outPngCells) && outPngCells != "-")
+					s = File.Create(outPngCells);
+				GenCellsPng(s, nl);
+			}
+
+			if (genPngWires)
+			{
+				Stream s = Console.OpenStandardOutput();
+				if (!string.IsNullOrEmpty(outPngWires) && outPngWires != "-")
+					s = File.Create(outPngWires);
+				GenWiresPng(s, nl);
+			}
+
+			if (genPngLabels)
+			{
+				Stream s = Console.OpenStandardOutput();
+				if (!string.IsNullOrEmpty(outPngLabels) && outPngLabels != "-")
+					s = File.Create(outPngLabels);
+				GenLabelsPng(s, nl);
+			}
+
+			if (genPngFloor)
+			{
+				Stream s = Console.OpenStandardOutput();
+				if (!string.IsNullOrEmpty(outPngFloor) && outPngFloor != "-")
+					s = File.Create(outPngFloor);
+				GenFloorplanPng(s, nl);
+			}
+
+			if (genPng)
+			{
+				Stream s = Console.OpenStandardOutput();
+				if (!string.IsNullOrEmpty(outPng) && outPng != "-")
+					s = File.Create(outPng);
+				GenAllPng(s, nl);
+			}
+
+			if (genJS)
+			{
+				TextWriter s = Console.Out;
+				if (!string.IsNullOrEmpty(outJS) && outJS != "-")
+					s = File.CreateText(outJS);
+				nl.ToJavaScript(s);
+			}
+
+			return 0;
 		}
 
-		private static int GenHtml(Netlist nl)
+		private static void PrintHelp()
+		{
+			Console.Error.WriteLine("Usage: nlconv.exe [<OPTIONS>] [<FILES>]");
+			Console.Error.WriteLine();
+			Console.Error.WriteLine("OPTIONS:");
+			Console.Error.WriteLine("  --html <FILE>        Convert netlist to HTML.");
+			Console.Error.WriteLine("  --png-cells <FILE>   Convert netlist to PNG containing all cells.");
+			Console.Error.WriteLine("  --png-wires <FILE>   Convert netlist to PNG containing all wires.");
+			Console.Error.WriteLine("  --png-labels <FILE>  Convert netlist to PNG containing all labels.");
+			Console.Error.WriteLine("  --png-floor <FILE>   Convert netlist to PNG containing the floorplan of all cells.");
+			Console.Error.WriteLine("  --png <FILE>         Convert netlist to PNG containing everything.");
+			Console.Error.WriteLine("  --js <FILE>          Convert netlist to Java Script containing all coordinates.");
+			Console.Error.WriteLine();
+			Console.Error.WriteLine("Without any options, nlconv.exe just reads netlist");
+			Console.Error.WriteLine("and checks if there are no errors.");
+		}
+
+		private static void GenHtml(TextWriter s, Netlist nl)
 		{
 			const string style =
 				"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
@@ -123,20 +191,18 @@ namespace nlconv
 				   "href=\"http://creativecommons.org/licenses/by-sa/4.0/\">" +
 				"Creative Commons Attribution-ShareAlike 4.0 International License</a>.</p>";
 
-			Console.WriteLine("<!DOCTYPE html>");
-			Console.Write("<html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Netlist</title>");
-			Console.Write(style);
-			Console.Write("</head><body><nav><p>");
-			Console.Write("<a href=\"http://iceboy.a-singer.de/\">Home</a>");
-			Console.Write("</p><hr></nav><main><h1>Netlist</h1>");
-			nl.ToHtml(Console.Out);
-			Console.Write("</main><footer><hr>" + footer);
-			Console.Write("</footer></body></html>");
-
-			return 0;
+			s.WriteLine("<!DOCTYPE html>");
+			s.Write("<html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Netlist</title>");
+			s.Write(style);
+			s.Write("</head><body><nav><p>");
+			s.Write("<a href=\"http://iceboy.a-singer.de/\">Home</a>");
+			s.Write("</p><hr></nav><main><h1>Netlist</h1>");
+			nl.ToHtml(s);
+			s.Write("</main><footer><hr>" + footer);
+			s.Write("</footer></body></html>");
 		}
 
-		private static int GenPng(Netlist nl, Action<Graphics, float, float> draw)
+		private static void GenPng(Stream s, Netlist nl, Action<Graphics, float, float> draw)
 		{
 			const int width  = 16384;
 			const int height = 16384;
@@ -155,44 +221,37 @@ namespace nlconv
 
 				draw(g, sx, sy);
 			}
-			bmp.Save(Console.OpenStandardOutput(), ImageFormat.Png);
-			return 0;
+			bmp.Save(s, ImageFormat.Png);
 		}
 
-		private static int GenCellsPng(Netlist nl)
+		private static void GenCellsPng(Stream s, Netlist nl)
 		{
-			return GenPng(nl, (g, sx, sy) => { nl.DrawCells(g, sx, sy); });
+			GenPng(s, nl, (g, sx, sy) => { nl.DrawCells(g, sx, sy); });
 		}
 
-		private static int GenWiresPng(Netlist nl)
+		private static void GenWiresPng(Stream s, Netlist nl)
 		{
-			return GenPng(nl, (g, sx, sy) => { nl.DrawWires(g, sx, sy); });
+			GenPng(s, nl, (g, sx, sy) => { nl.DrawWires(g, sx, sy); });
 		}
 
-		private static int GenLabelsPng(Netlist nl)
+		private static void GenLabelsPng(Stream s, Netlist nl)
 		{
-			return GenPng(nl, (g, sx, sy) => { nl.DrawLabels(g, sx, sy); });
+			GenPng(s, nl, (g, sx, sy) => { nl.DrawLabels(g, sx, sy); });
 		}
 
-		private static int GenFloorplanPng(Netlist nl)
+		private static void GenFloorplanPng(Stream s, Netlist nl)
 		{
-			return GenPng(nl, (g, sx, sy) => { nl.DrawFloorplan(g, sx, sy); });
+			GenPng(s, nl, (g, sx, sy) => { nl.DrawFloorplan(g, sx, sy); });
 		}
 
-		private static int GenAllPng(Netlist nl)
+		private static void GenAllPng(Stream s, Netlist nl)
 		{
-			return GenPng(nl, (g, sx, sy) => {
+			GenPng(s, nl, (g, sx, sy) => {
 				nl.DrawFloorplan(g, sx, sy);
 				nl.DrawCells(g, sx, sy);
 				nl.DrawWires(g, sx, sy);
 				nl.DrawLabels(g, sx, sy);
 			});
-		}
-
-		private static int GenJavaScript(Netlist nl)
-		{
-			nl.ToJavaScript(Console.Out);
-			return 0;
 		}
 	}
 }
