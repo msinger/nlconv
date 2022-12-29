@@ -29,6 +29,10 @@ namespace nlconv
 				return true;
 			if (o.Contains(new Vector(P0.X, P1.Y)) || o.Contains(new Vector(P1.X, P0.Y)))
 				return true;
+			if ((new Line(P0, new Vector(P0.X, P1.Y))).SegmentsIntersect(new Line(o.P0, new Vector(o.P1.X, o.P0.Y))))
+				return true;
+			if ((new Line(o.P0, new Vector(o.P0.X, o.P1.Y))).SegmentsIntersect(new Line(P0, new Vector(P1.X, P0.Y))))
+				return true;
 			return false;
 		}
 
