@@ -156,7 +156,15 @@ namespace nlconv
 			if (!string.IsNullOrEmpty(Description))
 				s.Write("<p>" + Description.ToHtml() + "</p>");
 			if (!string.IsNullOrEmpty(DocUrl))
-				s.Write("<p><a href=\"" + DocUrl.Replace("%t", Name.ToHtmlId()).ToHtml() + "\">View documentation</a></p>");
+				s.Write("<p><a href=\"" + TransformedDocUrl + "\">View documentation</a></p>");
+		}
+
+		public string TransformedDocUrl
+		{
+			get
+			{
+				return DocUrl.Replace("%t", Name.ToHtmlId()).ToHtml();
+			}
 		}
 
 		public string CssClass

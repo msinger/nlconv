@@ -1111,6 +1111,49 @@ namespace nlconv
 		{
 			var tree = new QuadTree(new Vector(-128.0f, 128.0f), 128.0f, 64, 6);
 
+			s.WriteLine("var cell_types={");
+			foreach (var x in Types)
+			{
+				var n = x.Value.Name;
+				s.Write("\"");
+				s.Write(n.Escape());
+				s.Write("\":{h:\"");
+				s.Write(n.ToUpperInvariant().ToHtml().Escape());
+				s.Write("\",a:\"t_");
+				s.Write(n.ToHtmlId().Escape());
+				if (!string.IsNullOrEmpty(x.Value.Description))
+				{
+					s.Write("\",d:\"");
+					s.Write(x.Value.Description.ToHtml().Escape());
+				}
+				if (!string.IsNullOrEmpty(x.Value.DocUrl))
+				{
+					s.Write("\",u:\"");
+					s.Write(x.Value.TransformedDocUrl.Escape());
+				}
+				s.WriteLine("\"},");
+			}
+			s.WriteLine("};");
+
+			s.WriteLine("var cell_cats={");
+			foreach (var x in Categories)
+			{
+				var n = x.Value.Name;
+				s.Write("\"");
+				s.Write(n.Escape());
+				s.Write("\":{h:\"");
+				s.Write(n.ToUpperInvariant().ToHtml().Escape());
+				s.Write("\",a:\"f_");
+				s.Write(n.ToHtmlId().Escape());
+				if (!string.IsNullOrEmpty(x.Value.Description))
+				{
+					s.Write("\",d:\"");
+					s.Write(x.Value.Description.ToHtml().Escape());
+				}
+				s.WriteLine("\"},");
+			}
+			s.WriteLine("};");
+
 			var c = new Dictionary<string, List<string>>();
 			s.WriteLine("var cells_cn={");
 			foreach (var x in Cells)
@@ -1126,6 +1169,18 @@ namespace nlconv
 				s.Write(n.ToUpperInvariant().ToHtml().Escape());
 				s.Write("\",a:\"c_");
 				s.Write(n.ToHtmlId().Escape());
+				s.Write("\",t:\"");
+				s.Write(x.Value.Type.Escape());
+				if (!string.IsNullOrEmpty(x.Value.Category))
+				{
+					s.Write("\",f:\"");
+					s.Write(x.Value.Category.Escape());
+				}
+				if (!string.IsNullOrEmpty(x.Value.Description))
+				{
+					s.Write("\",d:\"");
+					s.Write(x.Value.Description.ToHtml().Escape());
+				}
 				s.Write("\",l:[");
 				s.Write(x.Value.Coords[""][0][0].ToString(CultureInfo.InvariantCulture));
 				s.Write(",");
@@ -1168,6 +1223,11 @@ namespace nlconv
 				s.Write(n.ToUpperInvariant().ToHtml().Escape());
 				s.Write("\",a:\"w_");
 				s.Write(n.ToHtmlId().Escape());
+				if (!string.IsNullOrEmpty(x.Value.Description))
+				{
+					s.Write("\",d:\"");
+					s.Write(x.Value.Description.ToHtml().Escape());
+				}
 				s.Write("\",l:[");
 				foreach (var y in x.Value.Coords)
 				{
