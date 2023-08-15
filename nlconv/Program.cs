@@ -55,8 +55,8 @@ namespace nlconv
 				files.Add("-");
 
 			Netlist nl = new Netlist();
-			nl.DefaultDocUrl = "/doc/dmg_cells.html#%t";
-			nl.MapUrl        = "/dmg_cpu_b_map/?wires=0";
+			nl.Strings["default-doc-url"] = "/doc/dmg_cells.html#%t";
+			nl.Strings["map-url"]         = "/dmg_cpu_b_map/?wires=0";
 
 			foreach (string fn in files)
 			{
@@ -201,25 +201,22 @@ namespace nlconv
 				".bg_white { background-color: rgba(255, 255, 255, 0.3); }" +
 				"</style>";
 
-			const string footer =
-				"<p><a rel=\"license\" " +
-				      "href=\"http://creativecommons.org/licenses/by-sa/4.0/\">" +
-				"<img alt=\"Creative Commons License\" style=\"border-width:0\" " +
-				     "src=\"https://i.creativecommons.org/l/by-sa/4.0/88x31.png\">" +
-				"</a><br>This work is licensed under a " +
-				"<a rel=\"license\" " +
-				   "href=\"http://creativecommons.org/licenses/by-sa/4.0/\">" +
-				"Creative Commons Attribution-ShareAlike 4.0 International License</a>.</p>";
+			string title = "Netlist";
+			if (nl.Strings.ContainsKey("html-title"))
+				title = nl.Strings["html-title"];
 
 			s.WriteLine("<!DOCTYPE html>");
-			s.Write("<html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Netlist</title>");
+			s.Write("<html lang=\"en\"><head><meta charset=\"UTF-8\"><title>" + title + "</title>");
 			s.Write(style);
-			s.Write("</head><body><nav><p>");
-			s.Write("<a href=\"http://iceboy.a-singer.de/\">Home</a>");
-			s.Write("</p><hr></nav><main><h1>Netlist</h1>");
+			s.Write("</head><body>");
+			if (nl.Strings.ContainsKey("html-navbar"))
+				s.Write("<nav>" + nl.Strings["html-navbar"] + "</nav><hr>");
+			s.Write("<main><h1>" + title + "</h1>");
 			nl.ToHtml(s);
-			s.Write("</main><footer><hr>" + footer);
-			s.Write("</footer></body></html>");
+			s.Write("</main>");
+			if (nl.Strings.ContainsKey("html-footer"))
+				s.Write("<hr><footer>" + nl.Strings["html-footer"] + "</footer>");
+			s.Write("</body></html>");
 		}
 
 		private static void GenPng(Stream s, Netlist nl, Action<Graphics, float, float> draw)

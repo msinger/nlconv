@@ -16,9 +16,7 @@ namespace nlconv
 		public readonly Dictionary<WireConnection, WireDefinition>   Cons;
 		public readonly List<LabelDefinition>                        Labels;
 		public readonly SortedDictionary<string, CategoryDefinition> Categories;
-
-		public string DefaultDocUrl = "";
-		public string MapUrl        = "";
+		public readonly SortedDictionary<string, string>             Strings;
 
 		public Netlist() : base()
 		{
@@ -29,6 +27,7 @@ namespace nlconv
 			Cons       = new Dictionary<WireConnection, WireDefinition>();
 			Labels     = new List<LabelDefinition>();
 			Categories = new SortedDictionary<string, CategoryDefinition>();
+			Strings    = new SortedDictionary<string, string>();
 		}
 
 		protected static void ParseEOT(LinkedListNode<LexerToken> n)
@@ -115,7 +114,10 @@ namespace nlconv
 			var ports   = ParsePortDefinitionList(ref n);
 			var coords  = ParseCoordList(ref n, true);
 			string desc = "";
-			string doc  = DefaultDocUrl;
+			string doc  = "";
+
+			if (Strings.ContainsKey("default-doc-url"))
+				doc = Strings["default-doc-url"];
 
 			while (n.Value.Type == LexerTokenType.String)
 			{
@@ -424,7 +426,7 @@ namespace nlconv
 			return l;
 		}
 
-		protected static WireDefinition ParseWireDefinition(LinkedListNode<LexerToken> n)
+		protected WireDefinition ParseWireDefinition(LinkedListNode<LexerToken> n)
 		{
 			LinkedListNode<LexerToken> me = n;
 
@@ -463,7 +465,18 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			WireDefinition w = new WireDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), sig, desc);
+			float wire_width = 1.0f;
+			if (Strings.ContainsKey("js-wire-scale"))
+			{
+				float t;
+				if (float.TryParse(Strings["js-wire-scale"],
+				                   NumberStyles.AllowDecimalPoint,
+				                   NumberFormatInfo.InvariantInfo,
+				                   out t))
+					wire_width = t;
+			}
+
+			WireDefinition w = new WireDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), sig, desc, wire_width);
 
 			w.Sources.AddRange(sources);
 
@@ -646,6 +659,41 @@ namespace nlconv
 			return c;
 		}
 
+		protected static StringDefinition ParseStringDefinition(LinkedListNode<LexerToken> n)
+		{
+			LinkedListNode<LexerToken> me = n;
+
+			if (n.Value.Type != LexerTokenType.Name || n.Value.String.ToLowerInvariant() != "define")
+				throw new NetlistFormatException(n.Value.Pos, "String definition expected.");
+			n = n.Next;
+
+			if (n.Value.Type != LexerTokenType.Name)
+				throw new NetlistFormatException(n.Value.Pos, "String name expected.");
+			string name = n.Value.String;
+			n = n.Next;
+
+			string s = "";
+			switch (n.Value.Type)
+			{
+			case LexerTokenType.String:
+				while (n.Value.Type == LexerTokenType.String)
+				{
+					s += n.Value.String;
+					n = n.Next;
+				}
+				break;
+			case LexerTokenType.Value:
+				s = n.Value.Value.ToString(NumberFormatInfo.InvariantInfo);
+				n = n.Next;
+				break;
+			}
+
+			StringDefinition d = new StringDefinition(me.Value.Pos, name, s);
+
+			ParseEOT(n);
+			return d;
+		}
+
 		protected IList<ParserToken> Parse(LinkedListNode<LexerToken> n)
 		{
 			switch (n.Value.Type)
@@ -670,6 +718,8 @@ namespace nlconv
 					return new ParserToken[] { ParseLabelDefinition(n) };
 				case "category":
 					return new ParserToken[] { ParseCategoryDefinition(n) };
+				case "define":
+					return new ParserToken[] { ParseStringDefinition(n) };
 				default:
 					throw new NetlistFormatException(n.Value.Pos, "Invalid statement.");
 				}
@@ -942,6 +992,11 @@ namespace nlconv
 							throw new NetlistFormatException(t.Pos, "Category name already in use.");
 						Categories.Add(cd.Name, cd);
 					}
+					else if (t is StringDefinition)
+					{
+						StringDefinition sd = (StringDefinition)t;
+						Strings[sd.Name] = sd.String;
+					}
 					else
 					{
 						throw new NetlistFormatException(t.Pos, "Unknown parser token.");
@@ -1109,8 +1164,22 @@ namespace nlconv
 
 		public virtual void ToJavaScript(TextWriter s)
 		{
+			float wire_width = 1.0f;
+			if (Strings.ContainsKey("js-wire-scale"))
+			{
+				float t;
+				if (float.TryParse(Strings["js-wire-scale"],
+				                   NumberStyles.AllowDecimalPoint,
+				                   NumberFormatInfo.InvariantInfo,
+				                   out t))
+					wire_width = t;
+			}
+
 			var tree = new QuadTree(new Vector(-128.0f, 128.0f), 128.0f, 64, 6);
 
+			s.Write("var wire_width=");
+			s.Write(wire_width.ToString(NumberFormatInfo.InvariantInfo));
+			s.WriteLine(";");
 			s.WriteLine("var cell_types={");
 			foreach (var x in Types)
 			{

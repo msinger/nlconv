@@ -48,17 +48,7 @@ namespace nlconv
 
 		public override string Message
 		{
-			get
-			{
-				string s = base.Message;
-				if (pos.Line != 0 && pos.Col != 0)
-					s = pos.Line.ToString() + ":" + pos.Col.ToString() + ": " + s;
-				else if (pos.Col != 0)
-					s = pos.Col.ToString() + ": " + s;
-				if (!string.IsNullOrEmpty(pos.File))
-					s = pos.File + ":" + s;
-				return s;
-			}
+			get { return pos.ToString() + ": " + base.Message; }
 		}
 	}
 }

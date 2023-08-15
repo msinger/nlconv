@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace nlconv
 {
 	public abstract partial class NetlistLexerBase
@@ -32,17 +34,17 @@ namespace nlconv
 				string s = null;
 				switch (Type)
 				{
-					case LexerTokenType.EOT:    s = "<EOT>";              break;
-					case LexerTokenType.Name:   s = "'" + String + "'";   break;
-					case LexerTokenType.String: s = "\"" + String + "\""; break;
-					case LexerTokenType.Value:  s = Value.ToString();     break;
-					case LexerTokenType.Comma:  s = "<,>";                break;
-					case LexerTokenType.Plus:   s = "<+>";                break;
-					case LexerTokenType.Minus:  s = "<->";                break;
-					case LexerTokenType.Colon:  s = "<:>";                break;
-					case LexerTokenType.Dot:    s = "<.>";                break;
-					case LexerTokenType.At:     s = "<@>";                break;
-					case LexerTokenType.To:     s = "<TO>";               break;
+					case LexerTokenType.EOT:    s = "<EOT>";                                        break;
+					case LexerTokenType.Name:   s = "'" + String + "'";                             break;
+					case LexerTokenType.String: s = "\"" + String + "\"";                           break;
+					case LexerTokenType.Value:  s = Value.ToString(NumberFormatInfo.InvariantInfo); break;
+					case LexerTokenType.Comma:  s = "<,>";                                          break;
+					case LexerTokenType.Plus:   s = "<+>";                                          break;
+					case LexerTokenType.Minus:  s = "<->";                                          break;
+					case LexerTokenType.Colon:  s = "<:>";                                          break;
+					case LexerTokenType.Dot:    s = "<.>";                                          break;
+					case LexerTokenType.At:     s = "<@>";                                          break;
+					case LexerTokenType.To:     s = "<TO>";                                         break;
 				}
 				return s;
 			}

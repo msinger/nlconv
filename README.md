@@ -353,3 +353,45 @@ CATEGORY <category-name>[:<color>] ["<description-string>"];
   <dt>&lt;description-string&gt;</dt>
   <dd>A string in double quotes that describes this category.</dd>
 </dl>
+
+
+### String definition
+
+The `DEFINE` keyword is used to define strings that can influence the output file.
+
+```
+DEFINE <string-name> ["<string-value>"...];
+```
+or
+```
+DEFINE <string-name> <float-value>;
+```
+
+<dl>
+  <dt>&lt;string-name&gt;</dt>
+  <dd>
+    Name of the string. Can be any valid identifier name, but only the following have an effect:
+    <ul>
+      <li><code>default-doc-url</code>: Provides a default value for the documentation URL of type definitions.
+                                        Use <code>%t</code> as substitution for the name of the type.</li>
+      <li><code>map-url</code>:         The URL to the Leaflet map which is used in generated HTML code.</li>
+      <li><code>html-title</code>:      Title and headline of generated HTML file.</li>
+      <li><code>html-navbar</code>:     Code inserted as navigation bar in generated HTML file.</li>
+      <li><code>html-footer</code>:     Code inserted as footer in generated HTML file.</li>
+      <li><code>png-scale</code>:       Scaling of lines and crosses in generated PNG file.</li>
+      <li><code>js-wire-scale</code>:   Scaling of wire width for collision detection in generated JavaScript file.</li>
+    </ul>
+  </dd>
+
+  <dt>&lt;string-value&gt;</dt>
+  <dd>
+    Zero or more string literals containing the value that is assigned to the string definition. All given string literals
+    get concatenated. Zero string literals are equivalent to the empty string.
+  </dd>
+
+  <dt>&lt;float-value&gt;</dt>
+  <dd>
+    Float literal gets converted to a string. Or in other words, if second argument is a float value, then the
+    quotes can be omitted: <code>1.23</code> is equal to <code>"1.23"</code>.
+  </dd>
+</dl>

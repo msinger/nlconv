@@ -84,10 +84,10 @@ namespace nlconv
 			sb.Append("<a href=\"#c_" + Cell.ToHtmlId() + "\">");
 			sb.Append(Cell.ToHtmlName());
 			sb.Append("</a>.<span class=\"" + netlist.Types[cell.Type].Ports[Port].CssClass + "\">");
-			if (c != null)
-				sb.Append("<a href=\"" + netlist.MapUrl + "&view=c:" + cell.Name.ToUrl() + "&" + PortCoordString(c, fix) + "\">");
+			if (c != null && netlist.Strings.ContainsKey("map-url"))
+				sb.Append("<a href=\"" + netlist.Strings["map-url"] + "&view=c:" + cell.Name.ToUrl() + "&" + PortCoordString(c, fix) + "\">");
 			sb.Append(Port.ToHtmlName());
-			if (c != null)
+			if (c != null && netlist.Strings.ContainsKey("map-url"))
 				sb.Append("</a>");
 			sb.Append("</span>");
 			return sb.ToString();

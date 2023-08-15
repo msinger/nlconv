@@ -32,6 +32,7 @@ FILES = \
 	Properties/AssemblyInfo.cs \
 	QuadTree.cs \
 	SignalDefinition.cs \
+	StringDefinition.cs \
 	StringEscapeExtension.cs \
 	StringHtmlExtension.cs \
 	StringUnbarExtension.cs \

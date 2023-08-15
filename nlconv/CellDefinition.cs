@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Globalization;
 
 namespace nlconv
 {
@@ -137,10 +138,10 @@ namespace nlconv
 					s.Write("<br>");
 				first = false;
 
-				bool portLink = Coords.ContainsKey("") && Coords.ContainsKey(p.Name);
+				bool portLink = Coords.ContainsKey("") && Coords.ContainsKey(p.Name) && netlist.Strings.ContainsKey("map-url");
 				s.Write("<span class=\"" + p.CssClass + "\">");
 				if (portLink)
-					s.Write("<a href=\"" + netlist.MapUrl + "&view=c:" + Name.ToUrl() + "&" + PortCoordString(Coords[p.Name]) + "\">");
+					s.Write("<a href=\"" + netlist.Strings["map-url"] + "&view=c:" + Name.ToUrl() + "&" + PortCoordString(Coords[p.Name]) + "\">");
 				s.Write(p.Name.ToHtmlName());
 				if (portLink)
 					s.Write("</a>");
@@ -205,8 +206,8 @@ namespace nlconv
 			else
 				s.Write("<dt>Category</dt><dd>-</dd>");
 			s.Write("<dt>Orientation</dt><dd>" + OrientationString + "</dd>");
-			if (Coords.ContainsKey("") && !string.IsNullOrEmpty(netlist.MapUrl))
-				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=c:" + Name.ToUrl() + "\">Highlight on map</a></dd>");
+			if (Coords.ContainsKey("") && netlist.Strings.ContainsKey("map-url"))
+				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.Strings["map-url"] + "&view=c:" + Name.ToUrl() + "\">Highlight on map</a></dd>");
 			else
 				s.Write("<dt>Location</dt><dd>-</dd>");
 			s.Write("<dt>Driven by</dt><dd>");
@@ -344,10 +345,10 @@ namespace nlconv
 			return transform;
 		}
 
-		protected static void DrawCross(Graphics g, Pen pen, float x, float y, float sx, float sy)
+		protected static void DrawCross(Graphics g, Pen pen, float x, float y, float sx, float sy, float scale)
 		{
-			g.DrawLine(pen, x * sx - 5.0f, y * sy - 5.0f, x * sx + 5.0f, y * sy + 5.0f);
-			g.DrawLine(pen, x * sx - 5.0f, y * sy + 5.0f, x * sx + 5.0f, y * sy - 5.0f);
+			g.DrawLine(pen, x * sx - 5.0f * scale, y * sy - 5.0f * scale, x * sx + 5.0f * scale, y * sy + 5.0f * scale);
+			g.DrawLine(pen, x * sx - 5.0f * scale, y * sy + 5.0f * scale, x * sx + 5.0f * scale, y * sy - 5.0f * scale);
 		}
 
 		public virtual void Draw(Netlist netlist, Graphics g, float sx, float sy)
@@ -355,7 +356,18 @@ namespace nlconv
 			if (!CanDraw)
 				return;
 
-			Pen   pen   = new Pen(GetColor(netlist), 3.0f);
+			float scale = 1.0f;
+			if (netlist.Strings.ContainsKey("png-scale"))
+			{
+				float t;
+				if (float.TryParse(netlist.Strings["png-scale"],
+				                   NumberStyles.AllowDecimalPoint,
+				                   NumberFormatInfo.InvariantInfo,
+				                   out t))
+					scale = t;
+			}
+
+			Pen   pen   = new Pen(GetColor(netlist), 3.0f * scale);
 			Brush brush = new SolidBrush(Color.FromArgb(40, IsSpare ? Color.Black : Color.White));
 
 			var box = GetBoundingBox(sx, sy).Value;
@@ -381,15 +393,15 @@ namespace nlconv
 					continue;
 
 				Color col = port.Value.Color;
-				Pen small = new Pen(Color.FromArgb(100, col), 3.0f);
-				Pen big   = new Pen(Color.FromArgb(100, col), 5.0f);
+				Pen small = new Pen(Color.FromArgb(100, col), 3.0f * scale);
+				//Pen big   = new Pen(Color.FromArgb(100, col), 5.0f * scale);
 
 				foreach (var i in c)
 				{
 					if (i.Count == 2)
 					{
 						(float x, float y) pt = fix(i[0], i[1]);
-						DrawCross(g, small, pt.x, pt.y, sx, sy);
+						DrawCross(g, small, pt.x, pt.y, sx, sy, scale);
 					}
 					else
 					{
@@ -408,7 +420,7 @@ namespace nlconv
 						for (int j = 0; j < i.Count / 2; j++)
 						{
 							(float x, float y) pt = fix(i[j * 2], i[j * 2 + 1]);
-							DrawCross(g, small, pt.x, pt.y, sx, sy);
+							DrawCross(g, small, pt.x, pt.y, sx, sy, scale);
 						}
 					}
 				}

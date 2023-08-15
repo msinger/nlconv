@@ -2,6 +2,7 @@ using System.Text;
 using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 
 namespace nlconv
 {
@@ -12,15 +13,17 @@ namespace nlconv
 		public readonly List<WireConnection> Sources;
 		public readonly List<WireConnection> Drains;
 		public readonly string               Description;
+		public readonly float                WireWidth;
 		public readonly List<List<float>>    Coords;
 		public readonly List<string>         Alias;
 
-		public WireDefinition(Position pos, string name, string sig, string desc)
+		public WireDefinition(Position pos, string name, string sig, string desc, float wire_width)
 			: base(pos)
 		{
 			Name        = name;
 			Signal      = sig;
 			Description = desc;
+			WireWidth   = wire_width;
 			Sources     = new List<WireConnection>();
 			Drains      = new List<WireConnection>();
 			Coords      = new List<List<float>>();
@@ -117,8 +120,8 @@ namespace nlconv
 			s.Write("<dl>");
 			s.Write("<dt>Name</dt><dd>" + Name.ToHtmlName() + "</dd>");
 			s.Write("<dt>Signal Class</dt><dd>" + GetClassString(netlist).ToHtml() + "</dd>");
-			if (Coords.Count != 0 && !string.IsNullOrEmpty(netlist.MapUrl))
-				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.MapUrl + "&view=w:" + Name.ToUrl() + "\">Highlight on map</a></dd>");
+			if (Coords.Count != 0 && netlist.Strings.ContainsKey("map-url"))
+				s.Write("<dt>Location</dt><dd><a href=\"" + netlist.Strings["map-url"] + "&view=w:" + Name.ToUrl() + "\">Highlight on map</a></dd>");
 			else
 				s.Write("<dt>Location</dt><dd>-</dd>");
 			s.Write("<dt>Driven by</dt><dd>");
@@ -155,7 +158,17 @@ namespace nlconv
 
 		public virtual void Draw(Netlist netlist, Graphics g, float sx, float sy)
 		{
-			Pen pen = new Pen(GetColor(netlist), 5.0f);
+			float scale = 1.0f;
+			if (netlist.Strings.ContainsKey("png-scale"))
+			{
+				float t;
+				if (float.TryParse(netlist.Strings["png-scale"],
+				                   NumberStyles.AllowDecimalPoint,
+				                   NumberFormatInfo.InvariantInfo,
+				                   out t))
+					scale = t;
+			}
+			Pen pen = new Pen(GetColor(netlist), 5.0f * scale);
 			foreach (var c in Coords)
 			{
 				PointF[] pts = new PointF[c.Count / 2];
@@ -167,7 +180,7 @@ namespace nlconv
 
 		public virtual bool Intersects(Box b)
 		{
-			float w = 0.079f;
+			float w = 0.079f * WireWidth;
 
 			foreach (var c in Coords)
 			{

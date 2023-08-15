@@ -35,5 +35,17 @@ namespace nlconv
 			info.AddValue("Line",     Line, typeof(int));
 			info.AddValue("Column",   Col,  typeof(int));
 		}
+
+		public override string ToString()
+		{
+			string s = "";
+			if (Line != 0 && Col != 0)
+				s = Line.ToString() + ":" + Col.ToString();
+			else if (Col != 0)
+				s = Col.ToString();
+			if (!string.IsNullOrEmpty(File))
+				s = File + ":" + s;
+			return s;
+		}
 	}
 }
