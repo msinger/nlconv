@@ -17,6 +17,6 @@ using System.Runtime.CompilerServices;
 // The form "{Major}.{Minor}.*" will automatically update the build and revision,
 // and "{Major}.{Minor}.{Build}.*" will update just the revision.
 
-[assembly: AssemblyVersion("@NETLIST2HTML_VERSION@")]
-[assembly: AssemblyFileVersion("@NETLIST2HTML_VERSION@")]
+[assembly: AssemblyVersion("@NLCONV_VERSION@")]
+[assembly: AssemblyFileVersion("@NLCONV_VERSION@")]
 [assembly: AssemblyInformationalVersion("@VERSION@.0.0")]

@@ -94,7 +94,7 @@ if test "x$enable_gac" != "xno" && test "x$with_snk" = "xno"; then
 fi
 
 
-AC_SUBST(NETLIST2HTML_VERSION, $VERSION.0.0)
+AC_SUBST(NLCONV_VERSION, $VERSION.0.0)
 
 
 AC_CONFIG_FILES([

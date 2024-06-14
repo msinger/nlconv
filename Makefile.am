@@ -1,9 +1,9 @@
 EXTRA_DIST = \
 m4 \
 AUTHORS \
-COPYING \
+LICENSE \
 INSTALL \
-README \
+README.md \
 snk/nlconv.snk
 
 ACLOCAL_AMFLAGS = -I m4
