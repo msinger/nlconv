@@ -162,6 +162,7 @@ namespace nlconv
 		private static void GenHtml(TextWriter s, Netlist nl)
 		{
 			const string style =
+				"<link rel=\"icon\" href=\"/gameboy.svg\">" +
 				"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
 				"<style>" +
 				"img { max-width: 100%; display: inline; } " +

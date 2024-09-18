@@ -743,7 +743,7 @@ namespace nlconv
 				return null;
 
 			LinkedList<LexerToken> l = new LinkedList<LexerToken>();
-			while(true)
+			while (true)
 			{
 				LinkedListNode<LexerToken> n = fifo.First;
 				LexerToken                 t = n.Value;
@@ -1020,11 +1020,7 @@ namespace nlconv
 
 		public void Flush()
 		{
-			if (fifo.Count != 0)
-			{
-				LexerToken t = fifo.First.Value;
-				throw new NetlistFormatException(t.Pos, "End of file expected.");
-			}
+			NextFile(null);
 
 			// Check for duplicate aliases
 			List<string> names = new List<string>();
