@@ -441,10 +441,10 @@ namespace nlconv
 			if (min > 480.0f)  fsize = 150.0f;
 			if (min > 2400.0f) fsize = 380.0f;
 
-			using Font font = new Font(FontFamily.GenericMonospace, fsize);
+			Font font = new Font(FontFamily.GenericMonospace, fsize);
 
-			using Bitmap bmp = new Bitmap((int)max, (int)max, PixelFormat.Format32bppArgb);
-			using Graphics gt = Graphics.FromImage(bmp);
+			Bitmap bmp = new Bitmap((int)max, (int)max, PixelFormat.Format32bppArgb);
+			Graphics gt = Graphics.FromImage(bmp);
 
 			gt.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
@@ -452,8 +452,8 @@ namespace nlconv
 
 			var tbox = new RectangleF(-(max / 2.0f), -(max / 2.0f), max, max);
 
-			using var format = new StringFormat(StringFormatFlags.NoClip |
-			                                    StringFormatFlags.NoWrap);
+			var format = new StringFormat(StringFormatFlags.NoClip |
+			                              StringFormatFlags.NoWrap);
 			format.Alignment     = StringAlignment.Center;
 			format.LineAlignment = StringAlignment.Center;
 
@@ -473,6 +473,11 @@ namespace nlconv
 
 			g.DrawImage(bmp, box.X - max / 2.0f + box.Width / 2.0f, box.Y - max / 2.0f + box.Height / 2.0f);
 			g.Flush(FlushIntention.Flush);
+
+			format.Dispose();
+			gt.Dispose();
+			bmp.Dispose();
+			font.Dispose();
 		}
 
 		public virtual void DrawFloorplan(Netlist netlist, Graphics g, float sx, float sy)

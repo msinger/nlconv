@@ -86,18 +86,18 @@ namespace nlconv
 
 		public virtual void Draw(Graphics g, float sx, float sy)
 		{
-			string txt        = Text.Unbar(true);
-			Color col         = GetColor();
-			using Brush brush = new SolidBrush(col);
-			float sz          = Size * sx;
-			using Font font   = new Font(FontFamily.GenericMonospace, sz);
+			string txt  = Text.Unbar(true);
+			Color col   = GetColor();
+			Brush brush = new SolidBrush(col);
+			float sz    = Size * sx;
+			Font font   = new Font(FontFamily.GenericMonospace, sz);
 
 			SizeF sf = g.MeasureString(txt, font);
 
 			int w = (int)(((int)MathF.Max(sf.Width, sf.Height) + 1) & ~1u);
 			float hw = (float)w / 2.0f;
-			using Bitmap bmp = new Bitmap(w, w, PixelFormat.Format32bppArgb);
-			using Graphics gt = Graphics.FromImage(bmp);
+			Bitmap bmp = new Bitmap(w, w, PixelFormat.Format32bppArgb);
+			Graphics gt = Graphics.FromImage(bmp);
 
 			gt.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
@@ -105,8 +105,8 @@ namespace nlconv
 
 			var tbox = new RectangleF(-hw, -hw, (float)w, (float)w);
 
-			using var format = new StringFormat(StringFormatFlags.NoClip |
-			                                    StringFormatFlags.NoWrap);
+			var format = new StringFormat(StringFormatFlags.NoClip |
+			                              StringFormatFlags.NoWrap);
 
 			switch (Alignment)
 			{
@@ -226,6 +226,12 @@ namespace nlconv
 
 			g.DrawImage(bmp, Coords.X * sx - hw + fx, Coords.Y * sy - hw + fy);
 			g.Flush(FlushIntention.Flush);
+
+			format.Dispose();
+			gt.Dispose();
+			bmp.Dispose();
+			font.Dispose();
+			brush.Dispose();
 		}
 	}
 }

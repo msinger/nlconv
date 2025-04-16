@@ -291,8 +291,6 @@ namespace nlconv
 
 		protected static KeyValuePair<string, List<float>> ParseCoord(ref LinkedListNode<LexerToken> n, bool named)
 		{
-			LinkedListNode<LexerToken> me = n;
-
 			string name = "";
 			if (named && n.Value.Type == LexerTokenType.Name)
 			{
