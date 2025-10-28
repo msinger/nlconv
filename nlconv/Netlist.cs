@@ -446,6 +446,17 @@ namespace nlconv
 				n = n.Next;
 			}
 
+			bool unchk = false;
+
+			while (n.Value.Type == LexerTokenType.Name && n.Next.Value.Type != LexerTokenType.Dot)
+			{
+				if (n.Value.String.ToLowerInvariant() == "unchecked")
+					unchk = true;
+				else
+					break;
+				n = n.Next;
+			}
+
 			var sources = ParseWireConnectionList(ref n);
 			var drains  = (IList<WireConnection>)null;
 			if (n.Value.Type == LexerTokenType.To)
@@ -474,7 +485,7 @@ namespace nlconv
 					wire_width = t;
 			}
 
-			WireDefinition w = new WireDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), sig, desc, wire_width);
+			WireDefinition w = new WireDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), sig, unchk, desc, wire_width);
 
 			w.Sources.AddRange(sources);
 
@@ -881,7 +892,7 @@ namespace nlconv
 				if (p.Direction != PortDirection.Output && p.Direction != PortDirection.Tristate && p.Direction != PortDirection.Bidir && p.Direction != PortDirection.OutputLow && p.Direction != PortDirection.OutputHigh)
 					throw new NetlistFormatException(wire.Pos, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is not an output or tri-state.");
 
-				if (p.Direction == PortDirection.Output && wire.Sources.Count != 1 && !AreAllParallelInverters(wire.Sources))
+				if (p.Direction == PortDirection.Output && wire.Sources.Count != 1 && !wire.Unchecked && !AreAllParallelInverters(wire.Sources))
 					throw new NetlistFormatException(wire.Pos, "Port '" + c.Port + "' of cell '" + c.Cell + "' (type '" + cell.Type + "') in source list is an output (not tri-state), but there are multiple entries in source list, which do not come from parallel inverters.");
 
 				drvTri  |= p.Direction == PortDirection.Tristate || p.Direction == PortDirection.Bidir ? 1 : 0;

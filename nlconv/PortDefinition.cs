@@ -18,13 +18,13 @@ namespace nlconv
 			string d = "<invalid>";
 			switch (Direction)
 			{
-				case PortDirection.Input:        d = "in";  break;
-				case PortDirection.Output:       d = "out"; break;
-				case PortDirection.Tristate:     d = "tri"; break;
-				case PortDirection.Bidir:        d = "inout"; break;
-				case PortDirection.OutputLow:    d = "out0"; break;
-				case PortDirection.OutputHigh:   d = "out1"; break;
-				case PortDirection.NotConnected: d = "nc";  break;
+				case PortDirection.Input:        d = "in";            break;
+				case PortDirection.Output:       d = "out";           break;
+				case PortDirection.Tristate:     d = "tri";           break;
+				case PortDirection.Bidir:        d = "inout";         break;
+				case PortDirection.OutputLow:    d = "out0";          break;
+				case PortDirection.OutputHigh:   d = "out1";          break;
+				case PortDirection.NotConnected: d = "nc";            break;
 			}
 			return Name + ":" + d;
 		}

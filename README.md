@@ -231,8 +231,8 @@ ALIAS CELL <alias>... -> <cell-name>;
 The `WIRE` keyword is used to define connections between cell ports.
 
 ```
-WIRE <wire-name>[:<signal-class>] <source-ports>... [-> <drain-ports>...]
-     [@<wire-coordinates>...] ["<description-string>"];
+WIRE <wire-name>[:<signal-class>] [UNCHECKED] <source-ports>...
+     [-> <drain-ports>...] [@<wire-coordinates>...] ["<description-string>"];
 ```
 
 <dl>
@@ -251,7 +251,8 @@ WIRE <wire-name>[:<signal-class>] <source-ports>... [-> <drain-ports>...]
     with the following directions are allowed as source ports: <code>OUT</code>, <code>TRI</code>, <code>INOUT</code>,
     <code>OUT0</code> or <code>OUT1</code>. If direction is <code>OUT</code>, then the wire must have only one source port.
     if one port has the direction <code>OUT0</code> or <code>OUT1</code>, then all source ports must have the same
-    direction. Only <code>TRI</code> and <code>INOUT</code> ports can be intermixed.
+    direction. Only <code>TRI</code> and <code>INOUT</code> ports can be intermixed. Placing <code>UNCHECKED</code>
+    before the first source port allows having multiple ports with <code>OUT</code> direction.
   </dd>
 
   <dt>&lt;drain-ports&gt;</dt>

@@ -10,6 +10,7 @@ namespace nlconv
 	{
 		public readonly string               Name;
 		public readonly string               Signal;
+		public readonly bool                 Unchecked;
 		public readonly List<WireConnection> Sources;
 		public readonly List<WireConnection> Drains;
 		public readonly string               Description;
@@ -17,11 +18,12 @@ namespace nlconv
 		public readonly List<List<float>>    Coords;
 		public readonly List<string>         Alias;
 
-		public WireDefinition(Position pos, string name, string sig, string desc, float wire_width)
+		public WireDefinition(Position pos, string name, string sig, bool unchk, string desc, float wire_width)
 			: base(pos)
 		{
 			Name        = name;
 			Signal      = sig;
+			Unchecked   = unchk;
 			Description = desc;
 			WireWidth   = wire_width;
 			Sources     = new List<WireConnection>();
@@ -40,6 +42,8 @@ namespace nlconv
 				sb.Append(":");
 				sb.Append(Signal);
 			}
+			if (Unchecked)
+				sb.Append(" unchecked");
 			foreach (var src in Sources)
 			{
 				sb.Append(" ");
