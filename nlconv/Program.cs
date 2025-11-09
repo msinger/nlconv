@@ -19,6 +19,7 @@ namespace nlconv
 			bool   genPngFloor  = false;
 			bool   genPng       = false;
 			bool   genJS        = false;
+			bool   genSV        = false;
 			string outHtml      = null;
 			string outPngCells  = null;
 			string outPngWires  = null;
@@ -26,6 +27,7 @@ namespace nlconv
 			string outPngFloor  = null;
 			string outPng       = null;
 			string outJS        = null;
+			string outSV        = null;
 			List<string> files  = new List<string>();
 
 			for (int i = 0; i < args.Length; i++)
@@ -42,6 +44,7 @@ namespace nlconv
 						case "--png-floor":  genPngFloor  = true; outPngFloor  = nextArg; i++; break;
 						case "--png":        genPng       = true; outPng       = nextArg; i++; break;
 						case "--js":         genJS        = true; outJS        = nextArg; i++; break;
+						case "--sv":         genSV        = true; outSV        = nextArg; i++; break;
 						case "--":           parseOptions = false;                             break;
 						default:             PrintHelp(); return args[i] == "--help" ? 0 : 1;
 					}
@@ -73,7 +76,7 @@ namespace nlconv
 			}
 			nl.Flush();
 
-			if (!genHtml && !genPngCells && !genPngWires && !genPngLabels && !genPngFloor && !genPng && !genJS)
+			if (!genHtml && !genPngCells && !genPngWires && !genPngLabels && !genPngFloor && !genPng && !genJS && !genSV)
 				Console.Error.WriteLine("Netlist parsed successfully.");
 
 			if (genHtml)
@@ -139,6 +142,15 @@ namespace nlconv
 				s.Flush();
 			}
 
+			if (genSV)
+			{
+				TextWriter s = Console.Out;
+				if (!string.IsNullOrEmpty(outSV) && outSV != "-")
+					s = File.CreateText(outSV);
+				nl.ToSystemVerilog(s);
+				s.Flush();
+			}
+
 			return 0;
 		}
 
@@ -154,6 +166,7 @@ namespace nlconv
 			Console.Error.WriteLine("  --png-floor <FILE>   Convert netlist to PNG containing the floorplan of all cells.");
 			Console.Error.WriteLine("  --png <FILE>         Convert netlist to PNG containing everything.");
 			Console.Error.WriteLine("  --js <FILE>          Convert netlist to Java Script containing all coordinates.");
+			Console.Error.WriteLine("  --sv <FILE>          Convert netlist to SystemVerilog code for simulation.");
 			Console.Error.WriteLine();
 			Console.Error.WriteLine("Without any options, nlconv.exe just reads netlist");
 			Console.Error.WriteLine("and checks if there are no errors.");

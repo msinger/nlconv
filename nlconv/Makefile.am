@@ -35,6 +35,7 @@ FILES = \
 	StringDefinition.cs \
 	StringEscapeExtension.cs \
 	StringHtmlExtension.cs \
+	StringSVExtension.cs \
 	StringUnbarExtension.cs \
 	TypeDefinition.cs \
 	Vector.cs \
@@ -49,7 +50,9 @@ EXTRAS =
 
 REFERENCES = \
 	System \
-	System.Drawing
+	System.Drawing \
+	System.Numerics \
+	System.Numerics.Vectors
 
 PROJECT_REFERENCES =
 

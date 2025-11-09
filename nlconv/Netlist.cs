@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
 using System.Drawing;
+using System.Numerics;
 
 namespace nlconv
 {
@@ -1367,6 +1368,327 @@ namespace nlconv
 			s.Write("var qtree=");
 			tree.ToJavaScript(s);
 			s.WriteLine(";");
+		}
+
+		public class HdlWire
+		{
+			public string Name;
+			public string HdlName;
+			public bool NeedsKeeper;
+			public bool MultipleDrivers;
+			public bool IsVarType;
+			public bool MatchesPortName;
+			public List<WireConnection> Sources;
+			public List<WireConnection> Drains;
+			public Dictionary<string, HdlPort> Ports = new Dictionary<string, HdlPort>();
+			public bool HasPorts { get { return Ports.Count != 0; } }
+		}
+
+		public class HdlPort
+		{
+			public string Name;
+			public string HdlName;
+			public string Dir;
+			public HdlWire Wire;
+		}
+
+		public virtual void ToSystemVerilog(TextWriter s)
+		{
+			string module_name = "top";
+			if (Strings.ContainsKey("hdl-module"))
+				module_name = Strings["hdl-module"];
+
+			string cell_prefix = module_name + "_";
+			if (Strings.ContainsKey("hdl-cell-prefix"))
+				cell_prefix = Strings["hdl-cell-prefix"];
+
+			string port_cell_name = "port";
+			if (Strings.ContainsKey("hdl-port"))
+				port_cell_name = Strings["hdl-port"];
+
+			float lconv = 1.0f;
+			if (Strings.ContainsKey("hdl-length-conv"))
+			{
+				float t;
+				if (float.TryParse(Strings["hdl-length-conv"],
+				                   NumberStyles.AllowDecimalPoint,
+				                   NumberFormatInfo.InvariantInfo,
+				                   out t))
+					lconv = t;
+			}
+
+			CellDefinition port_cell = Cells[port_cell_name];
+
+			Dictionary<string, HdlWire> wires = new Dictionary<string, HdlWire>();
+			Dictionary<string, HdlPort> ports = new Dictionary<string, HdlPort>();
+			foreach (var wire in Wires.Values)
+			{
+				HdlWire w = new HdlWire();
+				w.Name = wire.Name;
+				w.HdlName = wire.Name.ToSystemVerilog();
+				w.Sources = wire.Sources;
+				w.Drains = wire.Drains;
+
+				w.NeedsKeeper = wire.Sources.Count != 0;
+				w.MultipleDrivers = wire.Sources.Count > 1;
+				w.MatchesPortName = false;
+
+				foreach (WireConnection wc in wire.Sources)
+				{
+					TypeDefinition t = Types[Cells[wc.Cell].Type];
+					PortDirection d = t.Ports[wc.Port].Direction;
+					switch (d)
+					{
+						case PortDirection.Output:     w.NeedsKeeper = false; break;
+						case PortDirection.OutputLow:  w.NeedsKeeper = false; break;
+						case PortDirection.OutputHigh: w.NeedsKeeper = false; break;
+					}
+					if (wc.Cell == port_cell.Name)
+					{
+						HdlPort p = new HdlPort();
+						p.Name = wc.Port;
+						p.HdlName = wc.Port.ToSystemVerilog();
+						switch (d)
+						{
+							case PortDirection.Output:     p.Dir = "input"; break;
+							case PortDirection.Tristate:   p.Dir = "input"; break;
+							case PortDirection.Bidir:      p.Dir = "inout"; break;
+							case PortDirection.OutputLow:  p.Dir = "input"; break;
+							case PortDirection.OutputHigh: p.Dir = "input"; break;
+							default: throw new ApplicationException("Invalid port direction for port " + wc.Port);
+						}
+						p.Wire = w;
+						w.Ports.Add(wc.Port, p);
+						ports.Add(wc.Port, p);
+						if (p.HdlName == w.HdlName)
+							w.MatchesPortName = true;
+					}
+				}
+
+				foreach (WireConnection wc in wire.Drains)
+				{
+					TypeDefinition t = Types[Cells[wc.Cell].Type];
+					PortDirection d = t.Ports[wc.Port].Direction;
+					if (wc.Cell == port_cell.Name)
+					{
+						HdlPort p = new HdlPort();
+						p.Name = wc.Port;
+						p.HdlName = wc.Port.ToSystemVerilog();
+						switch (d)
+						{
+							case PortDirection.Input: p.Dir = "output"; break;
+							case PortDirection.Bidir: continue;
+							default: throw new ApplicationException("Invalid port direction for port " + wc.Port);
+						}
+						p.Wire = w;
+						w.Ports.Add(wc.Port, p);
+						ports.Add(wc.Port, p);
+						if (p.HdlName == w.HdlName)
+							w.MatchesPortName = true;
+					}
+				}
+
+				w.IsVarType = !w.NeedsKeeper && !w.MultipleDrivers;
+
+				if (w.NeedsKeeper)
+				{
+					foreach (var p in w.Ports.Values)
+					{
+						if (p.Dir == "inout")
+						{
+							Console.Error.WriteLine("Warning: Inout port " + p.HdlName + " needs a bus keeper in the higher level module.");
+							w.NeedsKeeper = false;
+						}
+					}
+				}
+
+				wires.Add(wire.Name, w);
+			}
+
+			s.WriteLine("`default_nettype none");
+			s.WriteLine();
+			s.Write("module ");
+			s.Write(module_name);
+			s.Write("(");
+
+			string sep = "";
+			foreach (var p in ports.Values)
+			{
+				s.WriteLine(sep);
+				string w = "tri logic";
+				if (p.Wire.IsVarType)
+					w = "logic";
+				s.Write("\t\t{0,-6} {1,9} {2}", p.Dir, w, p.HdlName);
+				sep = ",";
+			}
+
+			s.WriteLine(");");
+			s.WriteLine();
+
+			// Emit wire declarations for all wires except the ones that have the same name as their
+			// respective ports, because ports are already declared.
+			foreach (var w in wires.Values)
+			{
+				if (w.MatchesPortName)
+					continue;
+				if (w.IsVarType)
+					s.Write("\tlogic     ");
+				else
+					s.Write("\ttri logic ");
+				s.Write(w.HdlName);
+				s.WriteLine(";");
+			}
+
+			s.WriteLine();
+
+			// Assign wires to output ports.
+			bool found = false;
+			foreach (var w in wires.Values)
+			{
+				foreach (WireConnection wc in w.Drains)
+				{
+					if (wc.Cell == port_cell.Name)
+					{
+						var p = ports[wc.Port];
+						if (p.HdlName == w.HdlName)
+							continue;
+						if (p.Dir == "inout")
+							continue;
+						s.WriteLine("\tassign {0,-16} = {1};", p.HdlName, w.HdlName);
+						found = true;
+					}
+				}
+			}
+			if (found)
+				s.WriteLine();
+
+			// Assign input ports to wires.
+			found = false;
+			foreach (var w in wires.Values)
+			{
+				foreach (WireConnection wc in w.Sources)
+				{
+					if (wc.Cell == port_cell.Name)
+					{
+						var p = ports[wc.Port];
+						if (p.HdlName == w.HdlName)
+							continue;
+						if (p.Dir == "inout")
+							continue;
+						s.WriteLine("\tassign {0} = {1};", w.HdlName, p.HdlName);
+						found = true;
+					}
+				}
+			}
+			if (found)
+				s.WriteLine();
+
+			// Bridge bidirectional ports with wires.
+			found = false;
+			foreach (var w in wires.Values)
+			{
+				foreach (WireConnection wc in w.Sources)
+				{
+					if (wc.Cell == port_cell.Name)
+					{
+						var p = ports[wc.Port];
+						if (p.HdlName == w.HdlName)
+							continue;
+						if (p.Dir != "inout")
+							continue;
+						s.WriteLine("\ttran ({0}, {1});", w.HdlName, p.HdlName);
+						found = true;
+					}
+				}
+			}
+			if (found)
+				s.WriteLine();
+
+			foreach (var c in Cells.Values)
+			{
+				if (c.Name == port_cell.Name)
+					continue;
+				TypeDefinition t = Types[c.Type];
+				s.Write("\t");
+				s.Write(cell_prefix);
+				s.Write(c.Type.ToSystemVerilog());
+				s.Write(" #(");
+				sep = "";
+				foreach (var p in t.Ports.Values)
+				{
+					if (p.Direction == PortDirection.Input || p.Direction == PortDirection.NotConnected)
+						continue;
+					WireConnection wc = new WireConnection(c.Name, p.Name);
+					if (!Cons.ContainsKey(wc))
+						continue;
+					WireDefinition w = Cons[wc];
+					if (w.Coords.Count == 0)
+						continue;
+					s.WriteLine(sep);
+					s.Write("\t\t\t.L_");
+					s.Write(p.Name.ToSystemVerilog());
+					s.Write("(");
+					float sum = 0.0f;
+					foreach (List<float> l in w.Coords)
+					{
+						if (l.Count < 2)
+							continue;
+						float prev_y = l[0];
+						float prev_x = l[1];
+						for (int i = 2; i < l.Count; i += 2)
+						{
+							float y = l[i];
+							float x = l[i+1];
+							sum += Vector2.Distance(new Vector2(x, y), new Vector2(prev_x, prev_y)) * lconv;
+							prev_y = y;
+							prev_x = x;
+						}
+					}
+					s.Write(sum.ToString(CultureInfo.InvariantCulture));
+					s.Write(")");
+					sep = ",";
+				}
+				s.WriteLine();
+				s.Write("\t\t) ");
+				s.Write(c.Name.ToSystemVerilog());
+				s.Write("_inst (");
+				sep = "";
+				foreach (var p in t.Ports.Values)
+				{
+					s.WriteLine(sep);
+					s.Write("\t\t\t.");
+					s.Write(p.Name.ToSystemVerilog());
+					s.Write("(");
+					WireConnection wc = new WireConnection(c.Name, p.Name);
+					if (Cons.ContainsKey(wc))
+						s.Write(Cons[wc].Name.ToSystemVerilog());
+					s.Write(")");
+					sep = ",";
+				}
+				s.WriteLine();
+				s.WriteLine("\t\t);");
+				s.WriteLine();
+			}
+
+			// Emit bus keepers for wires that need them.
+			found = false;
+			foreach (var w in wires.Values)
+			{
+				if (!w.NeedsKeeper)
+					continue;
+				s.Write("\tkeeper ");
+				s.Write(w.HdlName);
+				s.Write("_keeper(.n(");
+				s.Write(w.HdlName);
+				s.WriteLine("));");
+				found = true;
+			}
+			if (found)
+				s.WriteLine();
+
+			s.WriteLine("endmodule");
+			s.WriteLine();
+			s.WriteLine("`default_nettype wire");
 		}
 	}
 }
