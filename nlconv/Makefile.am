@@ -37,6 +37,7 @@ FILES = \
 	StringHtmlExtension.cs \
 	StringSVExtension.cs \
 	StringUnbarExtension.cs \
+	SVNameProperties.cs \
 	TypeDefinition.cs \
 	Vector.cs \
 	WireConnection.cs \

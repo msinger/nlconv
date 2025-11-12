@@ -8,6 +8,17 @@ namespace nlconv
 	{
 		public static string ProcessBars(string n, string barOn, string barOff, string ws, Dictionary<char, string> map)
 		{
+			string indexPart = "";
+			int openIndex = n.LastIndexOf('[');
+			if (openIndex >= 0 && n.EndsWith("]"))
+			{
+				string numberPart = n.Substring(openIndex + 1, n.Length - openIndex - 2);
+				if (int.TryParse(numberPart, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
+				{
+					indexPart = n.Substring(openIndex);
+					n = n.Substring(0, openIndex);
+				}
+			}
 			StringBuilder sb = new StringBuilder();
 			int barMode = 0;
 			string tilde = "~";
@@ -92,6 +103,7 @@ namespace nlconv
 				sb.Append(tilde);
 			else if (barMode > 1)
 				sb.Append(barOff);
+			sb.Append(indexPart);
 			return sb.ToString();
 		}
 	}
