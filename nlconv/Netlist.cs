@@ -1644,9 +1644,39 @@ namespace nlconv
 			s.WriteLine();
 			s.Write("module ");
 			s.Write(module_name);
-			s.Write("(");
+			s.Write(" #(");
 
 			string sep = "";
+			foreach (var p in ports.Values)
+			{
+				if (p.Dir == "input")
+					continue;
+				float sum = 0.0f;
+				foreach (List<float> l in Wires[p.Wire.Name].Coords)
+				{
+					if (l.Count < 2)
+						continue;
+					float prev_y = l[0];
+					float prev_x = l[1];
+					for (int i = 2; i < l.Count; i += 2)
+					{
+						float y = l[i];
+						float x = l[i+1];
+						sum += Vector2.Distance(new Vector2(x, y), new Vector2(prev_x, prev_y)) * lconv;
+						prev_y = y;
+						prev_x = x;
+					}
+				}
+				s.WriteLine(sep);
+				s.Write("\t\tparameter real {0,-13} = {1}", p.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "L_"),
+				                                            sum.ToString(CultureInfo.InvariantCulture));
+				sep = ",";
+			}
+
+			s.WriteLine();
+			s.Write("\t) (");
+
+			sep = "";
 			foreach (var pv in pvectors.Values)
 			{
 				HdlPort p = pv.Ports[pv.MinBitIndex];
@@ -1669,7 +1699,8 @@ namespace nlconv
 				sep = ",";
 			}
 
-			s.WriteLine(");");
+			s.WriteLine();
+			s.WriteLine("\t);");
 			s.WriteLine();
 
 			// Emit wire (&vector) declarations for all wires except the ones that have the same name as their
@@ -1810,7 +1841,30 @@ namespace nlconv
 							prev_x = x;
 						}
 					}
-					cs.Append(sum.ToString(CultureInfo.InvariantCulture));
+					string par = null;
+					HdlWire hw = wires[w.Name];
+					if (hw.HasPorts)
+					{
+						HdlPort hp = null;
+						foreach (var v in hw.Ports.Values)
+						{
+							if (v.Dir != "input")
+							{
+								if (hp != null)
+								{
+									Console.Error.WriteLine("Warning: Wire " + w.Name + " is connected to multiple output ports. Using only the wire length parameter (L_*) of first port.");
+									break;
+								}
+								hp = v;
+							}
+						}
+						if (hp != null)
+							par = hp.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "L_");
+					}
+					if (par != null)
+						cs.Append(par);
+					else
+						cs.Append(sum.ToString(CultureInfo.InvariantCulture));
 					cs.Append(")");
 					sep = ",";
 				}
