@@ -1426,6 +1426,10 @@ namespace nlconv
 			if (Strings.ContainsKey("hdl-cell-prefix"))
 				cell_prefix = Strings["hdl-cell-prefix"];
 
+			string[] noprefix_cells = new string[] { };
+			if (Strings.ContainsKey("hdl-noprefix-cells"))
+				noprefix_cells = Strings["hdl-noprefix-cells"].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
 			string port_cell_name = "port";
 			if (Strings.ContainsKey("hdl-port"))
 				port_cell_name = Strings["hdl-port"];
@@ -1805,10 +1809,15 @@ namespace nlconv
 				if (c.Name == port_cell.Name)
 					continue;
 				TypeDefinition t = Types[c.Type];
+				bool use_prefix = true;
+				if (((System.Collections.IList)noprefix_cells).Contains(c.Type))
+					use_prefix = false;
 				StringBuilder cs = new StringBuilder();
 				cs.Append("\t");
-				cs.Append(cell_prefix);
-				cs.Append(c.Type.ToSystemVerilog());
+				if (use_prefix)
+					cs.Append(c.Type.ToSystemVerilog(SVNameProperties.Unvectorized, cell_prefix));
+				else
+					cs.Append(c.Type.ToSystemVerilog());
 				cs.Append(" #(");
 				sep = "";
 				foreach (var p in t.Ports.Values)
