@@ -1403,6 +1403,17 @@ namespace nlconv
 			public string HdlName;
 			public string Dir;
 			public HdlWire Wire;
+			public HdlPortVector Vector;
+			public int BitIndex;
+		}
+
+		public class HdlPortVector
+		{
+			public string Name;
+			public string HdlName;
+			public int MinBitIndex;
+			public int MaxBitIndex;
+			public Dictionary<int, HdlPort> Ports = new Dictionary<int, HdlPort>();
 		}
 
 		public virtual void ToSystemVerilog(TextWriter s)
@@ -1435,6 +1446,7 @@ namespace nlconv
 			Dictionary<string, HdlWire> wires = new Dictionary<string, HdlWire>();
 			Dictionary<string, HdlPort> ports = new Dictionary<string, HdlPort>();
 			Dictionary<string, HdlVector> vectors = new Dictionary<string, HdlVector>();
+			Dictionary<string, HdlPortVector> pvectors = new Dictionary<string, HdlPortVector>();
 			foreach (var wire in Wires.Values)
 			{
 				HdlWire w = new HdlWire();
@@ -1507,7 +1519,7 @@ namespace nlconv
 					{
 						HdlPort p = new HdlPort();
 						p.Name = wc.Port;
-						p.HdlName = wc.Port.ToSystemVerilog();
+						p.HdlName = wc.Port.ToSystemVerilog(SVNameProperties.Vector);
 						switch (d)
 						{
 							case PortDirection.Output:     p.Dir = "input"; break;
@@ -1522,6 +1534,29 @@ namespace nlconv
 						ports.Add(wc.Port, p);
 						if (p.HdlName == w.HdlName)
 							w.MatchesPortName = true;
+						if (p.Name.HasIndex(out p.BitIndex))
+						{
+							string basename = p.Name.ToSystemVerilog(SVNameProperties.Basename);
+							HdlPortVector vec = null;
+							if (pvectors.ContainsKey(basename))
+							{
+								vec = pvectors[basename];
+								if (vec.MinBitIndex > p.BitIndex)
+									vec.MinBitIndex = p.BitIndex;
+								if (vec.MaxBitIndex < p.BitIndex)
+									vec.MaxBitIndex = p.BitIndex;
+							}
+							else
+							{
+								vec = new HdlPortVector();
+								vec.HdlName = basename;
+								pvectors.Add(basename, vec);
+								vec.MinBitIndex = p.BitIndex;
+								vec.MaxBitIndex = p.BitIndex;
+							}
+							vec.Ports.Add(p.BitIndex, p);
+							p.Vector = vec;
+						}
 					}
 				}
 
@@ -1533,7 +1568,7 @@ namespace nlconv
 					{
 						HdlPort p = new HdlPort();
 						p.Name = wc.Port;
-						p.HdlName = wc.Port.ToSystemVerilog();
+						p.HdlName = wc.Port.ToSystemVerilog(SVNameProperties.Vector);
 						switch (d)
 						{
 							case PortDirection.Input: p.Dir = "output"; break;
@@ -1545,6 +1580,29 @@ namespace nlconv
 						ports.Add(wc.Port, p);
 						if (p.HdlName == w.HdlName)
 							w.MatchesPortName = true;
+						if (p.Name.HasIndex(out p.BitIndex))
+						{
+							string basename = p.Name.ToSystemVerilog(SVNameProperties.Basename);
+							HdlPortVector vec = null;
+							if (pvectors.ContainsKey(basename))
+							{
+								vec = pvectors[basename];
+								if (vec.MinBitIndex > p.BitIndex)
+									vec.MinBitIndex = p.BitIndex;
+								if (vec.MaxBitIndex < p.BitIndex)
+									vec.MaxBitIndex = p.BitIndex;
+							}
+							else
+							{
+								vec = new HdlPortVector();
+								vec.HdlName = basename;
+								pvectors.Add(basename, vec);
+								vec.MinBitIndex = p.BitIndex;
+								vec.MaxBitIndex = p.BitIndex;
+							}
+							vec.Ports.Add(p.BitIndex, p);
+							p.Vector = vec;
+						}
 					}
 				}
 
@@ -1589,8 +1647,20 @@ namespace nlconv
 			s.Write("(");
 
 			string sep = "";
+			foreach (var pv in pvectors.Values)
+			{
+				HdlPort p = pv.Ports[pv.MinBitIndex];
+				s.WriteLine(sep);
+				string w = "tri logic";
+				if (p.Wire.IsVarType)
+					w = "logic";
+				s.Write("\t\t{0,-6} {1,9} [{4}:{3}] {2}", p.Dir, w, pv.HdlName, pv.MinBitIndex, pv.MaxBitIndex);
+				sep = ",";
+			}
 			foreach (var p in ports.Values)
 			{
+				if (p.Vector != null)
+					continue;
 				s.WriteLine(sep);
 				string w = "tri logic";
 				if (p.Wire.IsVarType)
