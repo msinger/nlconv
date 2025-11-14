@@ -1382,6 +1382,16 @@ namespace nlconv
 			public List<WireConnection> Drains;
 			public Dictionary<string, HdlPort> Ports = new Dictionary<string, HdlPort>();
 			public bool HasPorts { get { return Ports.Count != 0; } }
+			public HdlVector Vector;
+			public int BitIndex;
+		}
+
+		public class HdlVector
+		{
+			public string HdlName;
+			public int MinBitIndex;
+			public int MaxBitIndex;
+			public Dictionary<int, HdlWire> Wires = new Dictionary<int, HdlWire>();
 		}
 
 		public class HdlPort
@@ -1421,19 +1431,66 @@ namespace nlconv
 
 			Dictionary<string, HdlWire> wires = new Dictionary<string, HdlWire>();
 			Dictionary<string, HdlPort> ports = new Dictionary<string, HdlPort>();
+			Dictionary<string, HdlVector> vectors = new Dictionary<string, HdlVector>();
 			foreach (var wire in Wires.Values)
 			{
 				HdlWire w = new HdlWire();
 				w.Name = wire.Name;
-				w.HdlName = wire.Name.ToSystemVerilog();
+				w.HdlName = w.Name.ToSystemVerilog(SVNameProperties.Vector);
 				w.Sources = wire.Sources;
 				w.Drains = wire.Drains;
 
-				w.NeedsKeeper = wire.Sources.Count != 0;
-				w.MultipleDrivers = wire.Sources.Count > 1;
+				if (w.Name.HasIndex(out w.BitIndex))
+				{
+					string basename = wire.Name.ToSystemVerilog(SVNameProperties.Basename);
+					HdlVector vec = null;
+					if (vectors.ContainsKey(basename))
+					{
+						vec = vectors[basename];
+						if (vec.MinBitIndex > w.BitIndex)
+							vec.MinBitIndex = w.BitIndex;
+						if (vec.MaxBitIndex < w.BitIndex)
+							vec.MaxBitIndex = w.BitIndex;
+					}
+					else
+					{
+						vec = new HdlVector();
+						vec.HdlName = basename;
+						vectors.Add(basename, vec);
+						vec.MinBitIndex = w.BitIndex;
+						vec.MaxBitIndex = w.BitIndex;
+					}
+					vec.Wires.Add(w.BitIndex, w);
+					w.Vector = vec;
+				}
+
+				wires.Add(w.Name, w);
+			}
+
+			// Undo vectorization for vectors that are not 0 based. Can cause issues in Icarus.
+			List<string> undoVectors = new List<string>();
+			foreach (var vec in vectors.Values)
+			{
+				if (vec.MinBitIndex == 0)
+					continue;
+				foreach (var w in vec.Wires.Values)
+				{
+					w.HdlName = w.Name.ToSystemVerilog(SVNameProperties.Unvectorized);
+					w.Vector = null;
+					w.BitIndex = -1;
+				}
+				undoVectors.Add(vec.HdlName);
+			}
+			foreach (string vec in undoVectors)
+				vectors.Remove(vec);
+
+			foreach (var w in wires.Values)
+			{
+				w.NeedsKeeper = w.Sources.Count != 0;
+				w.MultipleDrivers = w.Sources.Count > 1;
 				w.MatchesPortName = false;
 
-				foreach (WireConnection wc in wire.Sources)
+				foreach (WireConnection wc in w.Sources)
 				{
 					TypeDefinition t = Types[Cells[wc.Cell].Type];
 					PortDirection d = t.Ports[wc.Port].Direction;
@@ -1465,7 +1522,7 @@ namespace nlconv
 					}
 				}
 
-				foreach (WireConnection wc in wire.Drains)
+				foreach (WireConnection wc in w.Drains)
 				{
 					TypeDefinition t = Types[Cells[wc.Cell].Type];
 					PortDirection d = t.Ports[wc.Port].Direction;
@@ -1501,8 +1558,25 @@ namespace nlconv
 						}
 					}
 				}
+			}
 
-				wires.Add(wire.Name, w);
+			// Unify nettypes for vectors
+			foreach (var vec in vectors.Values)
+			{
+				bool needsKeeper = false;
+				bool isVarType   = true;
+				foreach (var w in vec.Wires.Values)
+				{
+					if (w.NeedsKeeper)
+						needsKeeper = true;
+					if (!w.IsVarType)
+						isVarType = false;
+				}
+				foreach (var w in vec.Wires.Values)
+				{
+					w.NeedsKeeper = needsKeeper;
+					w.IsVarType   = isVarType;
+				}
 			}
 
 			s.WriteLine("`default_nettype none");
@@ -1525,10 +1599,28 @@ namespace nlconv
 			s.WriteLine(");");
 			s.WriteLine();
 
-			// Emit wire declarations for all wires except the ones that have the same name as their
+			// Emit wire (&vector) declarations for all wires except the ones that have the same name as their
 			// respective ports, because ports are already declared.
+			foreach (var vec in vectors.Values)
+			{
+				var w = vec.Wires[vec.MinBitIndex];
+				if (w.MatchesPortName)
+					continue;
+				if (w.IsVarType)
+					s.Write("\tlogic     [");
+				else
+					s.Write("\ttri logic [");
+				s.Write(vec.MaxBitIndex.ToString(CultureInfo.InvariantCulture));
+				s.Write(":");
+				s.Write(vec.MinBitIndex.ToString(CultureInfo.InvariantCulture));
+				s.Write("] ");
+				s.Write(vec.HdlName);
+				s.WriteLine(";");
+			}
 			foreach (var w in wires.Values)
 			{
+				if (w.Vector != null)
+					continue;
 				if (w.MatchesPortName)
 					continue;
 				if (w.IsVarType)
@@ -1625,8 +1717,8 @@ namespace nlconv
 					if (w.Coords.Count == 0)
 						continue;
 					s.WriteLine(sep);
-					s.Write("\t\t\t.L_");
-					s.Write(p.Name.ToSystemVerilog());
+					s.Write("\t\t\t.");
+					s.Write(p.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "L_"));
 					s.Write("(");
 					float sum = 0.0f;
 					foreach (List<float> l in w.Coords)
@@ -1650,8 +1742,8 @@ namespace nlconv
 				}
 				s.WriteLine();
 				s.Write("\t\t) ");
-				s.Write(c.Name.ToSystemVerilog());
-				s.Write("_inst (");
+				s.Write(c.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "", "_inst"));
+				s.Write(" (");
 				sep = "";
 				foreach (var p in t.Ports.Values)
 				{
@@ -1661,7 +1753,7 @@ namespace nlconv
 					s.Write("(");
 					WireConnection wc = new WireConnection(c.Name, p.Name);
 					if (Cons.ContainsKey(wc))
-						s.Write(Cons[wc].Name.ToSystemVerilog());
+						s.Write(wires[Cons[wc].Name].HdlName);
 					s.Write(")");
 					sep = ",";
 				}
@@ -1672,13 +1764,30 @@ namespace nlconv
 
 			// Emit bus keepers for wires that need them.
 			found = false;
+			foreach (var vec in vectors.Values)
+			{
+				var w = vec.Wires[vec.MinBitIndex];
+				if (!w.NeedsKeeper)
+					continue;
+				s.Write("\tkeeper #(.N(");
+				int width = vec.MaxBitIndex - vec.MinBitIndex + 1;
+				s.Write(width.ToString(CultureInfo.InvariantCulture));
+				s.Write(")) ");
+				s.Write(w.Name.ToSystemVerilog(SVNameProperties.Basename, "", "_keeper"));
+				s.Write("(.n(");
+				s.Write(vec.HdlName);
+				s.WriteLine("));");
+				found = true;
+			}
 			foreach (var w in wires.Values)
 			{
+				if (w.Vector != null)
+					continue;
 				if (!w.NeedsKeeper)
 					continue;
 				s.Write("\tkeeper ");
-				s.Write(w.HdlName);
-				s.Write("_keeper(.n(");
+				s.Write(w.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "", "_keeper"));
+				s.Write("(.n(");
 				s.Write(w.HdlName);
 				s.WriteLine("));");
 				found = true;
