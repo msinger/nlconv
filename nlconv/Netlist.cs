@@ -1388,10 +1388,13 @@ namespace nlconv
 
 		public class HdlVector
 		{
+			public string Name;
 			public string HdlName;
 			public int MinBitIndex;
 			public int MaxBitIndex;
 			public Dictionary<int, HdlWire> Wires = new Dictionary<int, HdlWire>();
+			public string HdlPortWireName;
+			public Dictionary<int, PortDirection> Dirs = new Dictionary<int, PortDirection>();
 		}
 
 		public class HdlPort
@@ -1701,10 +1704,11 @@ namespace nlconv
 				if (c.Name == port_cell.Name)
 					continue;
 				TypeDefinition t = Types[c.Type];
-				s.Write("\t");
-				s.Write(cell_prefix);
-				s.Write(c.Type.ToSystemVerilog());
-				s.Write(" #(");
+				StringBuilder cs = new StringBuilder();
+				cs.Append("\t");
+				cs.Append(cell_prefix);
+				cs.Append(c.Type.ToSystemVerilog());
+				cs.Append(" #(");
 				sep = "";
 				foreach (var p in t.Ports.Values)
 				{
@@ -1716,10 +1720,10 @@ namespace nlconv
 					WireDefinition w = Cons[wc];
 					if (w.Coords.Count == 0)
 						continue;
-					s.WriteLine(sep);
-					s.Write("\t\t\t.");
-					s.Write(p.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "L_"));
-					s.Write("(");
+					cs.AppendLine(sep);
+					cs.Append("\t\t\t.");
+					cs.Append(p.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "L_"));
+					cs.Append("(");
 					float sum = 0.0f;
 					foreach (List<float> l in w.Coords)
 					{
@@ -1736,30 +1740,148 @@ namespace nlconv
 							prev_x = x;
 						}
 					}
-					s.Write(sum.ToString(CultureInfo.InvariantCulture));
-					s.Write(")");
+					cs.Append(sum.ToString(CultureInfo.InvariantCulture));
+					cs.Append(")");
 					sep = ",";
 				}
-				s.WriteLine();
-				s.Write("\t\t) ");
-				s.Write(c.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "", "_inst"));
-				s.Write(" (");
+				cs.AppendLine();
+				cs.Append("\t\t) ");
+				cs.Append(c.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "", "_inst"));
+				cs.Append(" (");
+				Dictionary<string, HdlVector> vecs = new Dictionary<string, HdlVector>();
 				sep = "";
 				foreach (var p in t.Ports.Values)
 				{
-					s.WriteLine(sep);
-					s.Write("\t\t\t.");
-					s.Write(p.Name.ToSystemVerilog());
-					s.Write("(");
 					WireConnection wc = new WireConnection(c.Name, p.Name);
+					if (p.Name.HasIndex(out int idx))
+					{
+						string basename = p.Name.ToSystemVerilog(SVNameProperties.Basename);
+						HdlVector vec = null;
+						if (vecs.ContainsKey(basename))
+						{
+							vec = vecs[basename];
+							if (vec.MinBitIndex > idx)
+								vec.MinBitIndex = idx;
+							if (vec.MaxBitIndex < idx)
+								vec.MaxBitIndex = idx;
+						}
+						else
+						{
+							vec = new HdlVector();
+							vec.Name = p.Name.Substring(0, p.Name.LastIndexOf('['));
+							vec.HdlName = basename;
+							vecs.Add(basename, vec);
+							vec.MinBitIndex = idx;
+							vec.MaxBitIndex = idx;
+							vec.HdlPortWireName = null;
+						}
+						if (Cons.ContainsKey(wc))
+							vec.Wires.Add(idx, wires[Cons[wc].Name]);
+						vec.Dirs.Add(idx, p.Direction);
+						continue;
+					}
+					cs.AppendLine(sep);
+					cs.Append("\t\t\t.");
+					cs.Append(p.Name.ToSystemVerilog());
+					cs.Append("(");
 					if (Cons.ContainsKey(wc))
-						s.Write(wires[Cons[wc].Name].HdlName);
-					s.Write(")");
+						cs.Append(wires[Cons[wc].Name].HdlName);
+					cs.Append(")");
 					sep = ",";
 				}
-				s.WriteLine();
-				s.WriteLine("\t\t);");
-				s.WriteLine();
+				foreach (HdlVector vec in vecs.Values)
+				{
+					HdlVector refvec = null;
+					HdlWire firstwire = null;
+					bool is1to1 = true;
+					for (int i = vec.MinBitIndex; i <= vec.MaxBitIndex; i++)
+					{
+						HdlWire w = null;
+						if (!vec.Wires.ContainsKey(i))
+						{
+							if (firstwire != null)
+							{
+								is1to1 = false;
+								break;
+							}
+							continue;
+						}
+						w = vec.Wires[i];
+						if (w.Vector == null)
+						{
+							is1to1 = false;
+							break;
+						}
+						if (refvec == null)
+							refvec = w.Vector;
+						if (w.Vector != refvec || w.BitIndex != i)
+						{
+							is1to1 = false;
+							break;
+						}
+						if (firstwire == null)
+							firstwire = w;
+					}
+					string wname = "";
+					if (is1to1 && firstwire != null)
+						wname = firstwire.Vector.HdlName;
+					if (!is1to1)
+					{
+						wname = c.Name.ToSystemVerilog(SVNameProperties.Unvectorized, "", "_port_" + vec.Name);
+						vec.HdlPortWireName = wname;
+					}
+					cs.AppendLine(sep);
+					cs.Append("\t\t\t.");
+					cs.Append(vec.HdlName);
+					cs.Append("(");
+					cs.Append(wname);
+					cs.Append(")");
+					sep = ",";
+				}
+				cs.AppendLine();
+				cs.AppendLine("\t\t);");
+				cs.AppendLine();
+				foreach (HdlVector vec in vecs.Values)
+				{
+					if (vec.HdlPortWireName == null)
+						continue;
+					s.Write("\ttri logic [");
+					s.Write(vec.MaxBitIndex.ToString(CultureInfo.InvariantCulture));
+					s.Write(":");
+					s.Write(vec.MinBitIndex.ToString(CultureInfo.InvariantCulture));
+					s.Write("] ");
+					s.Write(vec.HdlPortWireName);
+					s.WriteLine(";");
+					foreach (var kvp in vec.Wires)
+					{
+						PortDirection d = vec.Dirs[kvp.Key];
+						if (d == PortDirection.Input && kvp.Value.IsVarType)
+						{
+							s.WriteLine("\tassign {0}[{1}] = {2};",
+							            vec.HdlPortWireName,
+							            kvp.Key.ToString(CultureInfo.InvariantCulture),
+							            kvp.Value.HdlName);
+						}
+						else if ((d == PortDirection.Output ||
+						          d == PortDirection.OutputLow ||
+						          d == PortDirection.OutputHigh) &&
+						         kvp.Value.IsVarType)
+						{
+							s.WriteLine("\tassign {2} = {0}[{1}];",
+							            vec.HdlPortWireName,
+							            kvp.Key.ToString(CultureInfo.InvariantCulture),
+							            kvp.Value.HdlName);
+						}
+						else
+						{
+							s.WriteLine("\ttran ({0}[{1}], {2});",
+							            vec.HdlPortWireName,
+							            kvp.Key.ToString(CultureInfo.InvariantCulture),
+							            kvp.Value.HdlName);
+						}
+					}
+				}
+				s.Write(cs.ToString());
 			}
 
 			// Emit bus keepers for wires that need them.
