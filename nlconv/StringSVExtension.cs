@@ -44,6 +44,8 @@ namespace nlconv
 			if (hasIndex)
 				basename = s.Substring(0, s.LastIndexOf('['));
 			string svname = BarProcessor.ProcessBars(basename, "", "_n", "_", empty);
+			prefix = BarProcessor.ProcessBars(prefix, "", "_n", "_", empty);
+			suffix = BarProcessor.ProcessBars(suffix, "", "_n", "_", empty);
 			svname = prefix + svname + suffix;
 			if (hasIndex && p == SVNameProperties.Unvectorized)
 			{
