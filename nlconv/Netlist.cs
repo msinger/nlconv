@@ -1377,6 +1377,7 @@ namespace nlconv
 			public bool NeedsKeeper;
 			public bool MultipleDrivers;
 			public bool IsVarType;
+			public bool IsRealType;
 			public bool MatchesPortName;
 			public List<WireConnection> Sources;
 			public List<WireConnection> Drains;
@@ -1434,6 +1435,10 @@ namespace nlconv
 			if (Strings.ContainsKey("hdl-port"))
 				port_cell_name = Strings["hdl-port"];
 
+			string[] real_signals = new string[] { };
+			if (Strings.ContainsKey("hdl-real-signals"))
+				real_signals = Strings["hdl-real-signals"].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
 			float lconv = 1.0f;
 			if (Strings.ContainsKey("hdl-length-conv"))
 			{
@@ -1455,11 +1460,12 @@ namespace nlconv
 			{
 				HdlWire w = new HdlWire();
 				w.Name = wire.Name;
-				w.HdlName = w.Name.ToSystemVerilog(SVNameProperties.Vector);
+				w.IsRealType = ((System.Collections.IList)real_signals).Contains(wire.Signal);
+				w.HdlName = w.Name.ToSystemVerilog(w.IsRealType ? SVNameProperties.Unvectorized : SVNameProperties.Vector);
 				w.Sources = wire.Sources;
 				w.Drains = wire.Drains;
 
-				if (w.Name.HasIndex(out w.BitIndex))
+				if (!w.IsRealType && w.Name.HasIndex(out w.BitIndex))
 				{
 					string basename = wire.Name.ToSystemVerilog(SVNameProperties.Basename);
 					HdlVector vec = null;
@@ -1509,6 +1515,13 @@ namespace nlconv
 				w.MultipleDrivers = w.Sources.Count > 1;
 				w.MatchesPortName = false;
 
+				if (w.IsRealType)
+				{
+					w.NeedsKeeper = false;
+					if (w.MultipleDrivers)
+						Console.Error.WriteLine("Warning: Wire " + w.Name + " is of type real and has multiple drivers. This won't work.");
+				}
+
 				foreach (WireConnection wc in w.Sources)
 				{
 					TypeDefinition t = Types[Cells[wc.Cell].Type];
@@ -1523,7 +1536,8 @@ namespace nlconv
 					{
 						HdlPort p = new HdlPort();
 						p.Name = wc.Port;
-						p.HdlName = wc.Port.ToSystemVerilog(SVNameProperties.Vector);
+						p.HdlName = wc.Port.ToSystemVerilog(w.IsRealType ? SVNameProperties.Unvectorized :
+						                                                   SVNameProperties.Vector);
 						switch (d)
 						{
 							case PortDirection.Output:     p.Dir = "input"; break;
@@ -1538,7 +1552,7 @@ namespace nlconv
 						ports.Add(wc.Port, p);
 						if (p.HdlName == w.HdlName)
 							w.MatchesPortName = true;
-						if (p.Name.HasIndex(out p.BitIndex))
+						if (!w.IsRealType && p.Name.HasIndex(out p.BitIndex))
 						{
 							string basename = p.Name.ToSystemVerilog(SVNameProperties.Basename);
 							HdlPortVector vec = null;
@@ -1572,7 +1586,8 @@ namespace nlconv
 					{
 						HdlPort p = new HdlPort();
 						p.Name = wc.Port;
-						p.HdlName = wc.Port.ToSystemVerilog(SVNameProperties.Vector);
+						p.HdlName = wc.Port.ToSystemVerilog(w.IsRealType ? SVNameProperties.Unvectorized :
+						                                                   SVNameProperties.Vector);
 						switch (d)
 						{
 							case PortDirection.Input: p.Dir = "output"; break;
@@ -1584,7 +1599,7 @@ namespace nlconv
 						ports.Add(wc.Port, p);
 						if (p.HdlName == w.HdlName)
 							w.MatchesPortName = true;
-						if (p.Name.HasIndex(out p.BitIndex))
+						if (!w.IsRealType && p.Name.HasIndex(out p.BitIndex))
 						{
 							string basename = p.Name.ToSystemVerilog(SVNameProperties.Basename);
 							HdlPortVector vec = null;
@@ -1610,7 +1625,7 @@ namespace nlconv
 					}
 				}
 
-				w.IsVarType = !w.NeedsKeeper && !w.MultipleDrivers;
+				w.IsVarType = w.IsRealType || (!w.NeedsKeeper && !w.MultipleDrivers);
 
 				if (w.NeedsKeeper)
 				{
@@ -1699,6 +1714,8 @@ namespace nlconv
 				string w = "tri logic";
 				if (p.Wire.IsVarType)
 					w = "logic";
+				if (p.Wire.IsRealType)
+					w = "real";
 				s.Write("\t\t{0,-6} {1,9} {2}", p.Dir, w, p.HdlName);
 				sep = ",";
 			}
@@ -1731,7 +1748,9 @@ namespace nlconv
 					continue;
 				if (w.MatchesPortName)
 					continue;
-				if (w.IsVarType)
+				if (w.IsRealType)
+					s.Write("\treal      ");
+				else if (w.IsVarType)
 					s.Write("\tlogic     ");
 				else
 					s.Write("\ttri logic ");
@@ -1754,7 +1773,10 @@ namespace nlconv
 							continue;
 						if (p.Dir == "inout")
 							continue;
-						s.WriteLine("\tassign {0,-16} = {1};", p.HdlName, w.HdlName);
+						if (w.IsRealType)
+							s.WriteLine("\talways @({1}) {0} = {1};", p.HdlName, w.HdlName);
+						else
+							s.WriteLine("\tassign {0,-16} = {1};", p.HdlName, w.HdlName);
 						found = true;
 					}
 				}
@@ -1775,7 +1797,10 @@ namespace nlconv
 							continue;
 						if (p.Dir == "inout")
 							continue;
-						s.WriteLine("\tassign {0} = {1};", w.HdlName, p.HdlName);
+						if (w.IsRealType)
+							s.WriteLine("\talways @({1}) {0} = {1};", w.HdlName, p.HdlName);
+						else
+							s.WriteLine("\tassign {0} = {1};", w.HdlName, p.HdlName);
 						found = true;
 					}
 				}
@@ -1796,6 +1821,8 @@ namespace nlconv
 							continue;
 						if (p.Dir != "inout")
 							continue;
+						if (w.IsRealType)
+							Console.Error.WriteLine("Warning: Sorry, don't know what to do with inout real port: " + p.Name);
 						s.WriteLine("\ttran ({0}, {1});", w.HdlName, p.HdlName);
 						found = true;
 					}
@@ -1886,7 +1913,10 @@ namespace nlconv
 				foreach (var p in t.Ports.Values)
 				{
 					WireConnection wc = new WireConnection(c.Name, p.Name);
-					if (p.Name.HasIndex(out int idx))
+					HdlWire w = null;
+					if (Cons.ContainsKey(wc))
+						w = wires[Cons[wc].Name];
+					if ((w == null || !w.IsRealType) && p.Name.HasIndex(out int idx))
 					{
 						string basename = p.Name.ToSystemVerilog(SVNameProperties.Basename);
 						HdlVector vec = null;
@@ -1917,8 +1947,8 @@ namespace nlconv
 					cs.Append("\t\t\t.");
 					cs.Append(p.Name.ToSystemVerilog());
 					cs.Append("(");
-					if (Cons.ContainsKey(wc))
-						cs.Append(wires[Cons[wc].Name].HdlName);
+					if (w != null)
+						cs.Append(w.HdlName);
 					cs.Append(")");
 					sep = ",";
 				}
