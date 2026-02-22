@@ -34,7 +34,8 @@ namespace nlconv
 			"this", "throughout", "time", "timeprecision", "timeunit", "tran", "tranif0", "tranif1", "tri", "tri0",
 			"tri1", "triand", "trior", "trireg", "type", "typedef", "union", "unique", "unique0", "unsigned", "until",
 			"until_with", "untyped", "use", "uwire", "var", "vectored", "virtual", "void", "wait", "wait_order",
-			"wand", "weak", "weak0", "weak1", "while", "wildcard", "wire", "with", "within", "wor", "xnor", "xor"
+			"wand", "weak", "weak0", "weak1", "while", "wildcard", "wire", "with", "within", "wone", "wor", "xnor",
+			"xor"
 		};
 
 		public static string ToSystemVerilog(this string s, SVNameProperties p = SVNameProperties.Unvectorized, string prefix = "", string suffix = "")
