@@ -354,6 +354,7 @@ namespace nlconv
 			bool   tr   = false;
 			string desc = "";
 			string cat  = "";
+			Dictionary<string, string> attribs = new Dictionary<string, string>();
 
 			while (n.Value.Type == LexerTokenType.Name)
 			{
@@ -385,7 +386,21 @@ namespace nlconv
 				n = n.Next;
 			}
 
-			CellDefinition c = new CellDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat.CanonicalizeBars());
+			if (n.Value.Type == LexerTokenType.Name && n.Value.String.ToLowerInvariant() == "attrib")
+			{
+				n = n.Next;
+				while (n.Value.Type == LexerTokenType.String)
+				{
+					string[] attrib = n.Value.String.Split('=', 2);
+					if (attrib.Length == 1)
+						attribs.Add(attrib[0].Trim(), "1");
+					else
+						attribs.Add(attrib[0].Trim(), attrib[1].Trim());
+					n = n.Next;
+				}
+			}
+
+			CellDefinition c = new CellDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat.CanonicalizeBars(), attribs);
 
 			foreach (var kvp in coords)
 				c.AddCoords(kvp.Key, kvp.Value);
@@ -1901,6 +1916,18 @@ namespace nlconv
 						cs.Append(par);
 					else
 						cs.Append(sum.ToString(CultureInfo.InvariantCulture));
+					cs.Append(")");
+					sep = ",";
+				}
+				foreach (var kvp in c.Attribs)
+				{
+					if (!kvp.Key.StartsWith("sv:"))
+						continue;
+					cs.AppendLine(sep);
+					cs.Append("\t\t\t.");
+					cs.Append(kvp.Key.Substring(3).Trim());
+					cs.Append("(");
+					cs.Append(kvp.Value);
 					cs.Append(")");
 					sep = ",";
 				}

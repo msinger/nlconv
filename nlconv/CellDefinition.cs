@@ -20,18 +20,20 @@ namespace nlconv
 		public readonly Dictionary<string, List<List<float>>> Coords;
 		public readonly List<string>     Alias;
 		public readonly string           Category;
+		public readonly Dictionary<string, string> Attribs;
 
-		public CellDefinition(Position         pos,
-		                      string           name,
-		                      string           type,
-		                      CellOrientation? orientation,
-		                      bool?            flipped,
-		                      bool             spare,
-		                      bool             virt,
-		                      bool             comp,
-		                      bool             trivial,
-		                      string           desc,
-		                      string           category)
+		public CellDefinition(Position                   pos,
+		                      string                     name,
+		                      string                     type,
+		                      CellOrientation?           orientation,
+		                      bool?                      flipped,
+		                      bool                       spare,
+		                      bool                       virt,
+		                      bool                       comp,
+		                      bool                       trivial,
+		                      string                     desc,
+		                      string                     category,
+		                      Dictionary<string, string> attribs)
 			: base(pos)
 		{
 			Name        = name;
@@ -46,6 +48,7 @@ namespace nlconv
 			Coords      = new Dictionary<string, List<List<float>>>();
 			Alias       = new List<string>();
 			Category    = category;
+			Attribs     = attribs;
 		}
 
 		public void AddCoords(string name, List<float> coords)

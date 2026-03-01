@@ -51,12 +51,10 @@ Generate Java Script containing all coordinates to be used by the [map](https://
 nlconv --js <input.nl >output.js
 ```
 
-
-TODO
-----
-
-Not yet implemented, but planned:
-* Generate Verilog code containing all cells and wires.
+Generate SystemVerilog code:
+```
+nlconv --sv <input.nl >output.sv
+```
 
 
 Input format
@@ -162,7 +160,8 @@ The `CELL` keyword is used to define cell instances.
 ```
 CELL <cell-name>:<type-name> [<orientation>[,FLIP]]
      [@<cell-coordinates>] [<port-name>@<port-coordinates>...]
-     [<flags>...] [-> <category>] ["<description-string>"];
+     [<flags>...] [-> <category>] ["<description-string>"]
+     [ATTRIB "<attrib-assignments>"...];
 ```
 
 <dl>
@@ -207,6 +206,14 @@ CELL <cell-name>:<type-name> [<orientation>[,FLIP]]
 
   <dt>&lt;description-string&gt;</dt>
   <dd>A string in double quotes that describes the function of this cell instance within the circuit.</dd>
+
+  <dt>&lt;attrib-assignments&gt;</dt>
+  <dd>
+    One or more strings representing custom attributes linked to this cell. Right now, this is only used when
+    generating SystemVerilog code for adding custom module parameters. <code>"sv:param=123"</code> would be
+    translated to <code>.param(123)</code> and added inside <code>#( ... )</code> alongside the automatically
+    generated wire length parameters.
+  </dd>
 </dl>
 
 Cells can have alias names. This is useful for example when a cell got renamed at some point. Then it can still
