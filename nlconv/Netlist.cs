@@ -18,17 +18,19 @@ namespace nlconv
 		public readonly List<LabelDefinition>                        Labels;
 		public readonly SortedDictionary<string, CategoryDefinition> Categories;
 		public readonly SortedDictionary<string, string>             Strings;
+		public readonly List<string>                                 Conditionals;
 
 		public Netlist() : base()
 		{
-			Types      = new SortedDictionary<string, TypeDefinition>();
-			Signals    = new SortedDictionary<string, SignalDefinition>();
-			Cells      = new SortedDictionary<string, CellDefinition>();
-			Wires      = new SortedDictionary<string, WireDefinition>();
-			Cons       = new Dictionary<WireConnection, WireDefinition>();
-			Labels     = new List<LabelDefinition>();
-			Categories = new SortedDictionary<string, CategoryDefinition>();
-			Strings    = new SortedDictionary<string, string>();
+			Types        = new SortedDictionary<string, TypeDefinition>();
+			Signals      = new SortedDictionary<string, SignalDefinition>();
+			Cells        = new SortedDictionary<string, CellDefinition>();
+			Wires        = new SortedDictionary<string, WireDefinition>();
+			Cons         = new Dictionary<WireConnection, WireDefinition>();
+			Labels       = new List<LabelDefinition>();
+			Categories   = new SortedDictionary<string, CategoryDefinition>();
+			Strings      = new SortedDictionary<string, string>();
+			Conditionals = new List<string>();
 		}
 
 		protected static void ParseEOT(LinkedListNode<LexerToken> n)
@@ -99,6 +101,23 @@ namespace nlconv
 				throw new NetlistFormatException(n.Value.Pos, "Type definition expected.");
 			n = n.Next;
 
+			bool cond = true;
+			if (n.Value.Type == LexerTokenType.Colon)
+			{
+				bool condNot = false;
+				n = n.Next;
+				if (n.Value.Type == LexerTokenType.Plus || n.Value.Type == LexerTokenType.Minus)
+				{
+					condNot = n.Value.Type == LexerTokenType.Minus;
+					n = n.Next;
+				}
+				if (n.Value.Type != LexerTokenType.Name)
+					throw new NetlistFormatException(n.Value.Pos, "Conditional tag expected.");
+				cond = Conditionals.Contains(n.Value.String);
+				if (condNot) cond = !cond;
+				n = n.Next;
+			}
+
 			if (n.Value.Type != LexerTokenType.Name)
 				throw new NetlistFormatException(n.Value.Pos, "Type name expected.");
 			string name = n.Value.String;
@@ -150,7 +169,7 @@ namespace nlconv
 				t.AddCoords(kvp.Key, kvp.Value);
 
 			ParseEOT(n);
-			return t;
+			return cond ? t : null;
 		}
 
 		protected static SignalDefinition ParseSignalDefinition(LinkedListNode<LexerToken> n)
@@ -321,7 +340,7 @@ namespace nlconv
 			return l;
 		}
 
-		protected static CellDefinition ParseCellDefinition(LinkedListNode<LexerToken> n)
+		protected CellDefinition ParseCellDefinition(LinkedListNode<LexerToken> n)
 		{
 			LinkedListNode<LexerToken> me = n;
 
@@ -329,8 +348,26 @@ namespace nlconv
 				throw new NetlistFormatException(n.Value.Pos, "Cell definition expected.");
 			n = n.Next;
 
+			bool cond = true;
+			if (n.Value.Type == LexerTokenType.Colon)
+			{
+				bool condNot = false;
+				n = n.Next;
+				if (n.Value.Type == LexerTokenType.Plus || n.Value.Type == LexerTokenType.Minus)
+				{
+					condNot = n.Value.Type == LexerTokenType.Minus;
+					n = n.Next;
+				}
+				if (n.Value.Type != LexerTokenType.Name)
+					throw new NetlistFormatException(n.Value.Pos, "Conditional tag expected.");
+				cond = Conditionals.Contains(n.Value.String);
+				if (condNot) cond = !cond;
+				n = n.Next;
+			}
+
 			if (n.Value.Type != LexerTokenType.Name)
 				throw new NetlistFormatException(n.Value.Pos, "Cell name expected.");
+			string name = n.Value.String;
 			n = n.Next;
 
 			if (n.Value.Type != LexerTokenType.Colon)
@@ -400,13 +437,13 @@ namespace nlconv
 				}
 			}
 
-			CellDefinition c = new CellDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat.CanonicalizeBars(), attribs);
+			CellDefinition c = new CellDefinition(me.Value.Pos, name.CanonicalizeBars(), t, o, f, sp, vr, cp, tr, desc, cat.CanonicalizeBars(), attribs);
 
 			foreach (var kvp in coords)
 				c.AddCoords(kvp.Key, kvp.Value);
 
 			ParseEOT(n);
-			return c;
+			return cond ? c : null;
 		}
 
 		protected static WireConnection ParseWireConnection(ref LinkedListNode<LexerToken> n)
@@ -428,14 +465,31 @@ namespace nlconv
 			return new WireConnection(me.Value.Pos, me.Value.String.CanonicalizeBars(), me.Next.Next.Value.String.CanonicalizeBars());
 		}
 
-		protected static IList<WireConnection> ParseWireConnectionList(ref LinkedListNode<LexerToken> n)
+		protected IList<WireConnection> ParseWireConnectionList(ref LinkedListNode<LexerToken> n)
 		{
 			List<WireConnection> l = new List<WireConnection>();
 			if (!(n.Value.Type == LexerTokenType.Name &&
 			      n.Next.Value.Type == LexerTokenType.Dot &&
 			      n.Next.Next.Value.Type == LexerTokenType.Name))
 				return l;
-			l.Add(ParseWireConnection(ref n));
+			WireConnection wc = ParseWireConnection(ref n);
+			bool cond = true;
+			if (n.Value.Type == LexerTokenType.Colon)
+			{
+				bool condNot = false;
+				n = n.Next;
+				if (n.Value.Type == LexerTokenType.Plus || n.Value.Type == LexerTokenType.Minus)
+				{
+					condNot = n.Value.Type == LexerTokenType.Minus;
+					n = n.Next;
+				}
+				if (n.Value.Type != LexerTokenType.Name)
+					throw new NetlistFormatException(n.Value.Pos, "Conditional tag expected.");
+				cond = Conditionals.Contains(n.Value.String);
+				if (condNot) cond = !cond;
+				n = n.Next;
+			}
+			if (cond) l.Add(wc);
 			l.AddRange(ParseWireConnectionList(ref n));
 			return l;
 		}
@@ -448,8 +502,26 @@ namespace nlconv
 				throw new NetlistFormatException(n.Value.Pos, "Wire definition expected.");
 			n = n.Next;
 
+			bool cond = true;
+			if (n.Value.Type == LexerTokenType.Colon)
+			{
+				bool condNot = false;
+				n = n.Next;
+				if (n.Value.Type == LexerTokenType.Plus || n.Value.Type == LexerTokenType.Minus)
+				{
+					condNot = n.Value.Type == LexerTokenType.Minus;
+					n = n.Next;
+				}
+				if (n.Value.Type != LexerTokenType.Name)
+					throw new NetlistFormatException(n.Value.Pos, "Conditional tag expected.");
+				cond = Conditionals.Contains(n.Value.String);
+				if (condNot) cond = !cond;
+				n = n.Next;
+			}
+
 			if (n.Value.Type != LexerTokenType.Name)
 				throw new NetlistFormatException(n.Value.Pos, "Wire name expected.");
+			string name = n.Value.String;
 			n = n.Next;
 
 			string sig = "";
@@ -501,7 +573,7 @@ namespace nlconv
 					wire_width = t;
 			}
 
-			WireDefinition w = new WireDefinition(me.Value.Pos, me.Next.Value.String.CanonicalizeBars(), sig, unchk, desc, wire_width);
+			WireDefinition w = new WireDefinition(me.Value.Pos, name.CanonicalizeBars(), sig, unchk, desc, wire_width);
 
 			w.Sources.AddRange(sources);
 
@@ -512,7 +584,7 @@ namespace nlconv
 				w.Coords.Add(kvp.Value);
 
 			ParseEOT(n);
-			return w;
+			return cond ? w : null;
 		}
 
 		protected static AliasDefinition ParseAliasDefinition(LinkedListNode<LexerToken> n)
@@ -721,6 +793,7 @@ namespace nlconv
 
 		protected IList<ParserToken> Parse(LinkedListNode<LexerToken> n)
 		{
+			ParserToken t;
 			switch (n.Value.Type)
 			{
 			case LexerTokenType.EOT:
@@ -730,13 +803,16 @@ namespace nlconv
 				switch (n.Value.String.ToLowerInvariant())
 				{
 				case "type":
-					return new ParserToken[] { ParseTypeDefinition(n) };
+					t = ParseTypeDefinition(n);
+					return t != null ? new ParserToken[] { t } : new ParserToken[] { };
 				case "signal":
 					return new ParserToken[] { ParseSignalDefinition(n) };
 				case "cell":
-					return new ParserToken[] { ParseCellDefinition(n) };
+					t = ParseCellDefinition(n);
+					return t != null ? new ParserToken[] { t } : new ParserToken[] { };
 				case "wire":
-					return new ParserToken[] { ParseWireDefinition(n) };
+					t = ParseWireDefinition(n);
+					return t != null ? new ParserToken[] { t } : new ParserToken[] { };
 				case "alias":
 					return new ParserToken[] { ParseAliasDefinition(n) };
 				case "label":

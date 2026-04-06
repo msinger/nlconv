@@ -56,6 +56,17 @@ Generate SystemVerilog code:
 nlconv --sv <input.nl >output.sv
 ```
 
+The option `--cond <conditional>` can be used to specify conditional tags that control which `TYPE`, `CELL` or `WIRE`
+definitions are actually processed. The type 'foo' in this example will only be defined when `--cond moo` was added on
+command line:
+```
+TYPE:moo foo:black a b c ...
+```
+Conditionals can be inverted with a `-` (minus) symbol. In this example, the type 'foo' will only be defined when
+`--cond moo` was **not** added on command line:
+```
+TYPE:-moo foo:black a b c ...
+```
 
 Input format
 ------------
@@ -71,11 +82,11 @@ The `TYPE` keyword is used to define cell types. Those cell types can then be us
 the `CELL` keyword.
 
 ```
-TYPE <type-name>[:<color>] <port-name>[:<port-dir>]
-                           [<port-name>[:<port-dir>]...]
-     [@<cell-coordinates>]
-     [<port-name>@<port-coordinates>...]
-     ["<description-string>" [DOC "<documentation-url>"]];
+TYPE[:<conditional>] <type-name>[:<color>] <port-name>[:<port-dir>]
+                                           [<port-name>[:<port-dir>]...]
+                     [@<cell-coordinates>]
+                     [<port-name>@<port-coordinates>...]
+                     ["<description-string>" [DOC "<documentation-url>"]];
 ```
 
 <dl>
@@ -158,10 +169,10 @@ SIGNAL <signal-name>[:<color>] ["<description-string>"];
 The `CELL` keyword is used to define cell instances.
 
 ```
-CELL <cell-name>:<type-name> [<orientation>[,FLIP]]
-     [@<cell-coordinates>] [<port-name>@<port-coordinates>...]
-     [<flags>...] [-> <category>] ["<description-string>"]
-     [ATTRIB "<attrib-assignments>"...];
+CELL[:<conditional>] <cell-name>:<type-name> [<orientation>[,FLIP]]
+                     [@<cell-coordinates>] [<port-name>@<port-coordinates>...]
+                     [<flags>...] [-> <category>] ["<description-string>"]
+                     [ATTRIB "<attrib-assignments>"...];
 ```
 
 <dl>
@@ -238,8 +249,8 @@ ALIAS CELL <alias>... -> <cell-name>;
 The `WIRE` keyword is used to define connections between cell ports.
 
 ```
-WIRE <wire-name>[:<signal-class>] [UNCHECKED] <source-ports>...
-     [-> <drain-ports>...] [@<wire-coordinates>...] ["<description-string>"];
+WIRE[:<conditional>] <wire-name>[:<signal-class>] [UNCHECKED] <source-ports>...
+                     [-> <drain-ports>...] [@<wire-coordinates>...] ["<description-string>"];
 ```
 
 <dl>
@@ -254,19 +265,20 @@ WIRE <wire-name>[:<signal-class>] [UNCHECKED] <source-ports>...
 
   <dt>&lt;source-ports&gt;</dt>
   <dd>
-    One or more source ports in the form <code>&lt;cell&gt;.&lt;port&gt;</code> that are driving this wire. Only ports
-    with the following directions are allowed as source ports: <code>OUT</code>, <code>TRI</code>, <code>INOUT</code>,
-    <code>OUT0</code> or <code>OUT1</code>. If direction is <code>OUT</code>, then the wire must have only one source port.
-    if one port has the direction <code>OUT0</code> or <code>OUT1</code>, then all source ports must have the same
-    direction. Only <code>TRI</code> and <code>INOUT</code> ports can be intermixed. Placing <code>UNCHECKED</code>
-    before the first source port allows having multiple ports with <code>OUT</code> direction.
+    One or more source ports in the form <code>&lt;cell&gt;.&lt;port&gt;[:&lt;conditional&gt;]</code> that are driving
+    this wire. Only ports with the following directions are allowed as source ports: <code>OUT</code>, <code>TRI</code>,
+    <code>INOUT</code>, <code>OUT0</code> or <code>OUT1</code>. If direction is <code>OUT</code>, then the wire must
+    have only one source port. If one port has the direction <code>OUT0</code> or <code>OUT1</code>, then all source
+    ports must have the same direction. Only <code>TRI</code> and <code>INOUT</code> ports can be intermixed. Placing
+    <code>UNCHECKED</code> before the first source port allows having multiple ports with <code>OUT</code> direction.
   </dd>
 
   <dt>&lt;drain-ports&gt;</dt>
   <dd>
-    Zero or more input ports in the form <code>&lt;cell&gt;.&lt;port&gt;</code> that are receiving the signal from
-    this wire. Only ports with direction <code>IN</code> are allowed as drain ports. <code>INOUT</code> ports are
-    technically inputs too, but they have to be listed under source ports, because they can also drive the wire.
+    Zero or more input ports in the form <code>&lt;cell&gt;.&lt;port&gt;[:&lt;conditional&gt;]</code> that are
+    receiving the signal from this wire. Only ports with direction <code>IN</code> are allowed as drain ports.
+    <code>INOUT</code> ports are technically inputs too, but they have to be listed under source ports, because they
+    can also drive the wire.
   </dd>
 
   <dt>&lt;wire-coordinates&gt;</dt>

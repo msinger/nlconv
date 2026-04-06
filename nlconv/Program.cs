@@ -29,6 +29,7 @@ namespace nlconv
 			string outJS        = null;
 			string outSV        = null;
 			List<string> files  = new List<string>();
+			List<string> conds  = new List<string>();
 
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -45,6 +46,7 @@ namespace nlconv
 						case "--png":        genPng       = true; outPng       = nextArg; i++; break;
 						case "--js":         genJS        = true; outJS        = nextArg; i++; break;
 						case "--sv":         genSV        = true; outSV        = nextArg; i++; break;
+						case "--cond":       conds.Add(nextArg);                          i++; break;
 						case "--":           parseOptions = false;                             break;
 						default:             PrintHelp(); return args[i] == "--help" ? 0 : 1;
 					}
@@ -60,6 +62,7 @@ namespace nlconv
 			Netlist nl = new Netlist();
 			nl.Strings["default-doc-url"] = "/doc/dmg_cells.html#%t";
 			nl.Strings["map-url"]         = "/dmg_cpu_b_map/?wires=0";
+			nl.Conditionals.AddRange(conds);
 
 			foreach (string fn in files)
 			{
@@ -167,6 +170,7 @@ namespace nlconv
 			Console.Error.WriteLine("  --png <FILE>         Convert netlist to PNG containing everything.");
 			Console.Error.WriteLine("  --js <FILE>          Convert netlist to Java Script containing all coordinates.");
 			Console.Error.WriteLine("  --sv <FILE>          Convert netlist to SystemVerilog code for simulation.");
+			Console.Error.WriteLine("  --cond <STR>         Adds a conditional tag that is used to filter definitions.");
 			Console.Error.WriteLine();
 			Console.Error.WriteLine("Without any options, nlconv.exe just reads netlist");
 			Console.Error.WriteLine("and checks if there are no errors.");
